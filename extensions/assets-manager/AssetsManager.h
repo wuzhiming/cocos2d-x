@@ -134,6 +134,8 @@ protected:
 // TODO: For next version
     //bool uncompress();
     
+    void batchDownload(const std::unordered_map<std::string, Downloader::DownloadUnit> &units);
+    
     /** @brief Function for destorying the downloaded version file and manifest file
      */
     void destroyDownloadedVersion();
