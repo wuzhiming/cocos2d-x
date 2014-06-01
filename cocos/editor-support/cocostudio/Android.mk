@@ -61,7 +61,8 @@ $(LOCAL_PATH)/../../../external
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../.. \
 $(LOCAL_PATH)/../../../external \
 $(LOCAL_PATH)/.. \
-$(LOCAL_PATH)/../..
+$(LOCAL_PATH)/../.. \
+$(LOCAL_PATH)/WidgetReader
 
 LOCAL_CFLAGS += -Wno-psabi -fexceptions
 LOCAL_EXPORT_CFLAGS += -Wno-psabi
