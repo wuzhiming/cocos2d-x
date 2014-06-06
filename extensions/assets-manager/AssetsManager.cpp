@@ -326,7 +326,7 @@ bool AssetsManager::renameFile(const std::string &path, const std::string &oldna
 #endif
 }
 
-bool AssetsManager::decompress(std::string zip)
+bool AssetsManager::decompress(const std::string &zip)
 {
     // Find root path for zip file
     size_t pos = zip.find_last_of("/\\");
@@ -376,22 +376,23 @@ bool AssetsManager::decompress(std::string zip)
             unzClose(zipfile);
             return false;
         }
-        
         const std::string fullPath = rootPath + fileName;
-        
-        //There are not directory entry in some case.
-        //So we need to create directory when decompressing file entry
-        if ( !createDirectory(fullPath) )
-        {
-            // Failed to create directory
-            CCLOG("AssetsManager : can not create directory %s", fullPath.c_str());
-            unzClose(zipfile);
-            return false;
-        }
         
         // Check if this entry is a directory or a file.
         const size_t filenameLength = strlen(fileName);
-        if (fileName[filenameLength-1] != '/')
+        if (fileName[filenameLength-1] == '/')
+        {
+            //There are not directory entry in some case.
+            //So we need to create directory when decompressing file entry
+            if ( !createDirectory(fullPath) )
+            {
+                // Failed to create directory
+                CCLOG("AssetsManager : can not create directory %s", fullPath.c_str());
+                unzClose(zipfile);
+                return false;
+            }
+        }
+        else
         {
             // Entry is a file, so extract it.
             // Open current file.
@@ -420,6 +421,7 @@ bool AssetsManager::decompress(std::string zip)
                 if (error < 0)
                 {
                     CCLOG("AssetsManager : can not read zip file %s, error code is %d", fileName, error);
+                    fclose(out);
                     unzCloseCurrentFile(zipfile);
                     unzClose(zipfile);
                     return false;
@@ -452,7 +454,7 @@ bool AssetsManager::decompress(std::string zip)
     return true;
 }
 
-void AssetsManager::dispatchUpdateEvent(EventAssetsManager::EventCode code, std::string assetId/* = ""*/, std::string message/* = ""*/, int curle_code/* = CURLE_OK*/, int curlm_code/* = CURLM_OK*/)
+void AssetsManager::dispatchUpdateEvent(EventAssetsManager::EventCode code, const std::string &assetId/* = ""*/, const std::string &message/* = ""*/, int curle_code/* = CURLE_OK*/, int curlm_code/* = CURLM_OK*/)
 {
     EventAssetsManager event(_eventName, this, code, _percent, assetId, message, curle_code, curlm_code);
     _eventDispatcher->dispatchEvent(&event);
@@ -596,10 +598,16 @@ void AssetsManager::startUpdate()
         {
             _updateState = State::UPDATING;
             // UPDATE
+            // Clean up before update
             _failedUnits.clear();
             _downloadUnits.clear();
             _compressedFiles.clear();
             _totalWaitToDownload = _totalToDownload = 0;
+            _percent = _sizeCollected = _totalSize = 0;
+            _downloadedSize.clear();
+            _totalEnabled = false;
+            
+            // Generate download units for all assets that need to be updated or added
             std::string packageUrl = _remoteManifest->getPackageUrl();
             for (auto it = diff_map.begin(); it != diff_map.end(); ++it) {
                 Manifest::AssetDiff diff = it->second;
@@ -721,7 +729,7 @@ void AssetsManager::update()
     }
 }
 
-void AssetsManager::updateAssets(const std::unordered_map<std::string, Downloader::DownloadUnit>& assets)
+void AssetsManager::updateAssets(const Downloader::DownloadUnits& assets)
 {
     if (_updateState != State::UPDATING && _localManifest->isLoaded() && _remoteManifest->isLoaded())
     {
@@ -736,9 +744,14 @@ void AssetsManager::updateAssets(const std::unordered_map<std::string, Downloade
     }
 }
 
-const std::unordered_map<std::string, Downloader::DownloadUnit>& AssetsManager::getFailedAssets() const
+const Downloader::DownloadUnits& AssetsManager::getFailedAssets() const
 {
     return _failedUnits;
+}
+
+void AssetsManager::downloadFailedAssets()
+{
+    updateAssets(_failedUnits);
 }
 
 
@@ -777,7 +790,44 @@ void AssetsManager::onProgress(double total, double downloaded, const std::strin
         dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_PROGRESSION, customId);
         return;
     }
-// TODO : Calculate the precised percentage of download
+    else
+    {
+        // Calcul total downloaded
+        bool found = false;
+        double totalDownloaded = 0;
+        for (auto it = _downloadedSize.begin(); it != _downloadedSize.end(); ++it)
+        {
+            if (it->first == customId)
+            {
+                it->second = downloaded;
+                found = true;
+            }
+            totalDownloaded += it->second;
+        }
+        // Collect information if not registed
+        if (!found)
+        {
+            _downloadedSize.emplace(customId, downloaded);
+            _totalSize += total;
+            _sizeCollected++;
+            // All collected, enable total size
+            if (_sizeCollected == _totalToDownload)
+            {
+                _totalEnabled = true;
+            }
+        }
+        
+        if (_totalEnabled && _updateState == State::UPDATING)
+        {
+            float currentPercent = 100 * totalDownloaded / _totalSize;
+            // Notify at integer level change
+            if ((int)currentPercent != (int)_percent) {
+                _percent = currentPercent;
+                // Notify progression event
+                dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_PROGRESSION, "");
+            }
+        }
+    }
 }
 
 void AssetsManager::onSuccess(const std::string &srcUrl, const std::string &storagePath, const std::string &customId)
@@ -853,12 +903,6 @@ void AssetsManager::onSuccess(const std::string &srcUrl, const std::string &stor
         {
             // Remove from failed units list
             _failedUnits.erase(unitIt);
-        }
-
-        if (_updateState == State::UPDATING) {
-            _percent = 100 * (_totalToDownload - _totalWaitToDownload) / _totalToDownload;
-            // Notify progression event
-            dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_PROGRESSION, customId);
         }
     }
 }

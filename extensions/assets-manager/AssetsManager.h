@@ -86,13 +86,9 @@ public:
      */
     void update();
     
-    /** @brief Update a list of assets under the current AssetsManager context
+    /** @brief Reupdate all failed assets under the current AssetsManager context
      */
-    void updateAssets(const std::unordered_map<std::string, Downloader::DownloadUnit>& assets);
-    
-    /** @brief Retrieve all failed assets during the last update
-     */
-    const std::unordered_map<std::string, Downloader::DownloadUnit>& getFailedAssets() const;
+    void downloadFailedAssets();
     
     /** @brief Gets the current update state.
      */
@@ -136,14 +132,22 @@ protected:
     
     void adjustPath(std::string &path);
     
-    void dispatchUpdateEvent(EventAssetsManager::EventCode code, std::string message = "", std::string assetId = "", int curle_code = 0, int curlm_code = 0);
+    void dispatchUpdateEvent(EventAssetsManager::EventCode code, const std::string &message = "", const std::string &assetId = "", int curle_code = 0, int curlm_code = 0);
     
     void downloadVersion();
     void parseVersion();
     void downloadManifest();
     void parseManifest();
     void startUpdate();
-    bool decompress(std::string filename);
+    bool decompress(const std::string &filename);
+    
+    /** @brief Update a list of assets under the current AssetsManager context
+     */
+    void updateAssets(const Downloader::DownloadUnits& assets);
+    
+    /** @brief Retrieve all failed assets during the last update
+     */
+    const Downloader::DownloadUnits& getFailedAssets() const;
     
     /** @brief Function for destorying the downloaded version file and manifest file
      */
@@ -234,6 +238,18 @@ private:
     
     //! Download percent
     float _percent;
+    
+    //! Indicate whether the total size should be enabled
+    int _totalEnabled;
+    
+    //! Indicate the number of file whose total size have been collected
+    int _sizeCollected;
+    
+    //! Total file size need to be downloaded (sum of all file)
+    double _totalSize;
+    
+    //! Downloaded size for each file
+    std::unordered_map<std::string, double> _downloadedSize;
     
     //! Total number of assets to download
     int _totalToDownload;
