@@ -168,7 +168,20 @@ void AssetsManagerLoaderScene::runThisTest()
                 case EventAssetsManager::EventCode::UPDATE_FAILED:
                 {
                     CCLOG("Update failed. %s", event->getMessage().c_str());
-                    _am->downloadFailedAssets();
+                    
+                    failCount ++;
+                    if (failCount < 5)
+                    {
+                        _am->downloadFailedAssets();
+                    }
+                    else
+                    {
+                        CCLOG("Reach maximum fail count, exit update process");
+                        failCount = 0;
+                        scene = new AssetsManagerTestScene(backgroundPaths[currentId]);
+                        Director::getInstance()->replaceScene(scene);
+                        scene->release();
+                    }
                 }
                     break;
                 case EventAssetsManager::EventCode::ERROR_UPDATING:
