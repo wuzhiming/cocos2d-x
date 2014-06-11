@@ -78,7 +78,6 @@ AssetsManager::AssetsManager(const std::string& manifestUrl, const std::string& 
     _fileUtils = FileUtils::getInstance();
     _updateState = State::UNCHECKED;
 
-    //Downloader *d = new Downloader();
     _downloader = std::make_shared<Downloader>();
     _downloader->setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
     _downloader->_onError = std::bind(&AssetsManager::onError, this, std::placeholders::_1);
