@@ -130,17 +130,21 @@ void Downloader::setConnectionTimeout(int timeout)
 
 void Downloader::notifyError(ErrorCode code, const std::string &msg/* ="" */, const std::string &customId/* ="" */, int curle_code/* = CURLE_OK*/, int curlm_code/* = CURLM_OK*/)
 {
-    std::shared_ptr<Downloader> downloader = shared_from_this();
+    std::weak_ptr<Downloader> ptr = shared_from_this();
     Director::getInstance()->getScheduler()->performFunctionInCocosThread([=]{
-        if (downloader != nullptr && downloader->_onError != nullptr)
+        if (!ptr.expired())
         {
-            Error err;
-            err.code = code;
-            err.curle_code = curle_code;
-            err.curlm_code = curlm_code;
-            err.message = msg;
-            err.customId = customId;
-            downloader->_onError(err);
+            std::shared_ptr<Downloader> downloader = ptr.lock();
+            if (downloader->_onError != nullptr)
+            {
+                Error err;
+                err.code = code;
+                err.curle_code = curle_code;
+                err.curlm_code = curlm_code;
+                err.message = msg;
+                err.customId = customId;
+                downloader->_onError(err);
+            }
         }
     });
 }
@@ -246,6 +250,7 @@ void Downloader::downloadSync(const std::string &srcUrl, const std::string &stor
 
 void Downloader::download(const std::string &srcUrl, const std::string &customId, const FileDescriptor &fDesc, const ProgressData &data)
 {
+    std::weak_ptr<Downloader> ptr = shared_from_this();
     CURL *curl = curl_easy_init();
     if (!curl)
     {
@@ -288,6 +293,7 @@ void Downloader::batchDownloadAsync(const DownloadUnits &units, const std::strin
 
 void Downloader::batchDownloadSync(const DownloadUnits &units, const std::string &batchId/* = ""*/)
 {
+    std::weak_ptr<Downloader> ptr = shared_from_this();
     int count = 0;
     DownloadUnits group;
     for (auto it = units.cbegin(); it != units.cend(); ++it, ++count)
