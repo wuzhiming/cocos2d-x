@@ -35,6 +35,7 @@ NS_CC_EXT_BEGIN
 #define LOW_SPEED_LIMIT     1L
 #define LOW_SPEED_TIME      5L
 #define MAX_REDIRS          2
+#define DEFAULT_TIMEOUT     5
 
 #define TEMP_EXT            ".temp"
 
@@ -93,10 +94,6 @@ int downloadProgressFunc(Downloader::ProgressData *ptr, double totalToDownload, 
                         callback(totalToDownload, nowDownloaded, data.url, data.customId);
                     }
                 }
-                else
-                {
-                    CCLOG("invalid callback.");
-                }
             });
         }
     }
@@ -109,8 +106,9 @@ Downloader::Downloader()
 : _onError(nullptr)
 , _onProgress(nullptr)
 , _onSuccess(nullptr)
-, _connectionTimeout(0)
+, _connectionTimeout(DEFAULT_TIMEOUT)
 {
+    _fileUtils = FileUtils::getInstance();
 }
 
 Downloader::~Downloader()
@@ -130,17 +128,21 @@ void Downloader::setConnectionTimeout(int timeout)
 
 void Downloader::notifyError(ErrorCode code, const std::string &msg/* ="" */, const std::string &customId/* ="" */, int curle_code/* = CURLE_OK*/, int curlm_code/* = CURLM_OK*/)
 {
-    std::shared_ptr<Downloader> downloader = shared_from_this();
+    std::weak_ptr<Downloader> ptr = shared_from_this();
     Director::getInstance()->getScheduler()->performFunctionInCocosThread([=]{
-        if (downloader != nullptr && downloader->_onError != nullptr)
+        if (!ptr.expired())
         {
-            Error err;
-            err.code = code;
-            err.curle_code = curle_code;
-            err.curlm_code = curlm_code;
-            err.message = msg;
-            err.customId = customId;
-            downloader->_onError(err);
+            std::shared_ptr<Downloader> downloader = ptr.lock();
+            if (downloader->_onError != nullptr)
+            {
+                Error err;
+                err.code = code;
+                err.curle_code = curle_code;
+                err.curlm_code = curlm_code;
+                err.message = msg;
+                err.customId = customId;
+                downloader->_onError(err);
+            }
         }
     });
 }
@@ -178,7 +180,7 @@ void Downloader::clearBatchDownloadData()
     }
 }
 
-void Downloader::prepareDownload(const std::string &srcUrl, const std::string &storagePath, const std::string &customId, FileDescriptor *fDesc, ProgressData *pData)
+void Downloader::prepareDownload(const std::string &srcUrl, const std::string &storagePath, const std::string &customId, bool resumeDownload, FileDescriptor *fDesc, ProgressData *pData)
 {
     std::shared_ptr<Downloader> downloader = shared_from_this();
     pData->customId = customId;
@@ -209,23 +211,29 @@ void Downloader::prepareDownload(const std::string &srcUrl, const std::string &s
         return;
     }
     
-    // Create a file to save package.
+    // Create a file to save file.
     const std::string outFileName = storagePath + TEMP_EXT;
-    fDesc->fp = fopen(outFileName.c_str(), "wb");
+    if (resumeDownload && _fileUtils->isExist(outFileName))
+    {
+        fDesc->fp = fopen(outFileName.c_str(), "ab");
+    }
+    else
+    {
+        fDesc->fp = fopen(outFileName.c_str(), "wb");
+    }
     if (!fDesc->fp)
     {
         err.code = ErrorCode::CREATE_FILE;
         err.message = StringUtils::format("Can not create file %s: errno %d", outFileName.c_str(), errno);
         if (this->_onError) this->_onError(err);
     }
-    else CCLOG("<<<<<FOPEN : %s (%p)", customId.c_str(), fDesc->fp);
 }
 
 void Downloader::downloadAsync(const std::string &srcUrl, const std::string &storagePath, const std::string &customId/* = ""*/)
 {
     FileDescriptor fDesc;
     ProgressData pData;
-    prepareDownload(srcUrl, storagePath, customId, &fDesc, &pData);
+    prepareDownload(srcUrl, storagePath, customId, false, &fDesc, &pData);
     if (fDesc.fp != NULL)
     {
         auto t = std::thread(&Downloader::download, this, srcUrl, customId, fDesc, pData);
@@ -237,7 +245,7 @@ void Downloader::downloadSync(const std::string &srcUrl, const std::string &stor
 {
     FileDescriptor fDesc;
     ProgressData pData;
-    prepareDownload(srcUrl, storagePath, customId, &fDesc, &pData);
+    prepareDownload(srcUrl, storagePath, customId, false, &fDesc, &pData);
     if (fDesc.fp != NULL)
     {
         download(srcUrl, customId, fDesc, pData);
@@ -246,6 +254,7 @@ void Downloader::downloadSync(const std::string &srcUrl, const std::string &stor
 
 void Downloader::download(const std::string &srcUrl, const std::string &customId, const FileDescriptor &fDesc, const ProgressData &data)
 {
+    std::weak_ptr<Downloader> ptr = shared_from_this();
     CURL *curl = curl_easy_init();
     if (!curl)
     {
@@ -274,7 +283,6 @@ void Downloader::download(const std::string &srcUrl, const std::string &customId
         this->notifyError(msg, customId, res);
     }
     
-    CCLOG("FCLOSE : %p>>>>>\n", fDesc.fp);
     fclose(fDesc.fp);
     curl_easy_cleanup(curl);
     
@@ -288,6 +296,7 @@ void Downloader::batchDownloadAsync(const DownloadUnits &units, const std::strin
 
 void Downloader::batchDownloadSync(const DownloadUnits &units, const std::string &batchId/* = ""*/)
 {
+    std::weak_ptr<Downloader> ptr = shared_from_this();
     int count = 0;
     DownloadUnits group;
     for (auto it = units.cbegin(); it != units.cend(); ++it, ++count)
@@ -307,9 +316,9 @@ void Downloader::batchDownloadSync(const DownloadUnits &units, const std::string
         groupBatchDownload(group);
     }
     
-    std::shared_ptr<Downloader> downloader = shared_from_this();
-    Director::getInstance()->getScheduler()->performFunctionInCocosThread([downloader, batchId]{
-        if (downloader != nullptr) {
+    Director::getInstance()->getScheduler()->performFunctionInCocosThread([ptr, batchId]{
+        if (!ptr.expired()) {
+            std::shared_ptr<Downloader> downloader = ptr.lock();
             auto callback = downloader->getSuccessCallback();
             if (callback != nullptr)
             {
@@ -333,7 +342,7 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
         
         FileDescriptor *fDesc = new FileDescriptor();
         ProgressData *data = new ProgressData();
-        prepareDownload(srcUrl, storagePath, customId, fDesc, data);
+        prepareDownload(srcUrl, storagePath, customId, unit.resumeDownload, fDesc, data);
         
         if (fDesc->fp != NULL)
         {
@@ -351,12 +360,22 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
             curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, LOW_SPEED_TIME);
             curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, true);
             curl_easy_setopt(curl, CURLOPT_MAXREDIRS, MAX_REDIRS);
+            
+            // Resuming download support
+            if (unit.resumeDownload)
+            {
+                // Check already downloaded size for current download unit
+                long size = AssetsManager::getFileSize(storagePath + TEMP_EXT);
+                if (size != -1)
+                {
+                    curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, size);
+                }
+            }
             fDesc->curl = curl;
             
             CURLMcode code = curl_multi_add_handle(multi_handle, curl);
             if (code != CURLM_OK)
             {
-                CCLOG("FCLOSE : %p>>>>>\n", fDesc->fp);
                 // Avoid memory leak
                 fclose(fDesc->fp);
                 delete data;
@@ -437,9 +456,12 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
     curl_multi_cleanup(multi_handle);
     for (auto it = _files.begin(); it != _files.end(); ++it)
     {
-        CCLOG("FCLOSE %p>>>>>", (*it)->fp);
-        fclose((*it)->fp);
-        curl_easy_cleanup((*it)->curl);
+        FILE *f = (*it)->fp;
+        fflush(f);
+        fclose(f);
+        auto single = (*it)->curl;
+        curl_multi_remove_handle(multi_handle, single);
+        curl_easy_cleanup(single);
     }
     
     // Check unfinished files and notify errors
@@ -447,7 +469,6 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
         ProgressData *data = *it;
         if (data->downloaded < data->totalToDownload)
         {
-            AssetsManager::removeFile(data->path + data->name + TEMP_EXT);
             this->notifyError(ErrorCode::NETWORK, "Unable to download file", data->customId);
         }
     }
