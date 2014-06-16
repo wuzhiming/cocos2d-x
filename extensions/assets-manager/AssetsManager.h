@@ -122,9 +122,11 @@ protected:
     
     static bool renameFile(const std::string &path, const std::string &oldname, const std::string &name);
     
+    static long getFileSize(const std::string &filepath);
+    
     std::string get(const std::string& key) const;
     
-    void loadManifest(const std::string& manifestUrl);
+    void loadLocalManifest(const std::string& manifestUrl);
     
     void prepareLocalManifest();
     
@@ -140,6 +142,7 @@ protected:
     void parseManifest();
     void startUpdate();
     bool decompress(const std::string &filename);
+    void decompressDownloadedZip();
     
     /** @brief Update a list of assets under the current AssetsManager context
      */
@@ -221,6 +224,9 @@ private:
     //! Local manifest
     Manifest *_localManifest;
     
+    //! Local temporary manifest for download resuming
+    Manifest *_tempManifest;
+    
     //! Remote manifest
     Manifest *_remoteManifest;
     
@@ -228,10 +234,10 @@ private:
     bool _waitToUpdate;
     
     //! All assets unit to download
-    std::unordered_map<std::string, Downloader::DownloadUnit> _downloadUnits;
+    Downloader::DownloadUnits _downloadUnits;
     
     //! All failed units
-    std::unordered_map<std::string, Downloader::DownloadUnit> _failedUnits;
+    Downloader::DownloadUnits _failedUnits;
     
     //! All files to be decompressed
     std::vector<std::string> _compressedFiles;

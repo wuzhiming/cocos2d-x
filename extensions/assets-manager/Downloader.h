@@ -86,6 +86,7 @@ public:
         std::string srcUrl;
         std::string storagePath;
         std::string customId;
+        bool resumeDownload;
     };
     
     typedef std::unordered_map<std::string, DownloadUnit> DownloadUnits;
@@ -123,7 +124,7 @@ protected:
         void *curl;
     };
 
-    void prepareDownload(const std::string &srcUrl, const std::string &storagePath, const std::string &customId, FileDescriptor *fDesc, ProgressData *pData);
+    void prepareDownload(const std::string &srcUrl, const std::string &storagePath, const std::string &customId, bool resumeDownload, FileDescriptor *fDesc, ProgressData *pData);
 
     void download(const std::string &srcUrl, const std::string &customId, const FileDescriptor &fDesc, const ProgressData &data);
     
@@ -152,6 +153,8 @@ private:
     std::vector<FileDescriptor *> _files;
     
     std::vector<ProgressData *> _progDatas;
+    
+    FileUtils *_fileUtils;
 };
 
 int downloadProgressFunc(Downloader::ProgressData *ptr, double totalToDownload, double nowDownloaded, double totalToUpLoad, double nowUpLoaded);
