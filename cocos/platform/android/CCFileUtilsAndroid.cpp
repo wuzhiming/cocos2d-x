@@ -360,7 +360,7 @@ string FileUtilsAndroid::getWritablePath() const
     }
 }
 
-#define COCOPLAY_UTILS_CLASS "com/chukong/cocoplay/utils/Utils"
+#define COCOPLAY_UTILS_CLASS "com/chukong/cocoplay/utils/FileUtils"
 
 bool FileUtilsAndroid::createDirectories(const std::string& path)
 {
