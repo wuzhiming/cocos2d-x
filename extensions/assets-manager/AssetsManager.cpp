@@ -61,6 +61,7 @@ AssetsManager::AssetsManager(const std::string& manifestUrl, const std::string& 
 , _totalToDownload(0)
 , _totalWaitToDownload(0)
 , _percent(0)
+, _percentByFile(0)
 , _manifestUrl(manifestUrl)
 , _storagePath("")
 , _cacheVersionPath("")
@@ -495,7 +496,7 @@ void AssetsManager::decompressDownloadedZip()
 
 void AssetsManager::dispatchUpdateEvent(EventAssetsManager::EventCode code, const std::string &assetId/* = ""*/, const std::string &message/* = ""*/, int curle_code/* = CURLE_OK*/, int curlm_code/* = CURLM_OK*/)
 {
-    EventAssetsManager event(_eventName, this, code, _percent, assetId, message, curle_code, curlm_code);
+    EventAssetsManager event(_eventName, this, code, _percent, _percentByFile, assetId, message, curle_code, curlm_code);
     _eventDispatcher->dispatchEvent(&event);
 }
 
@@ -626,7 +627,7 @@ void AssetsManager::startUpdate()
     _downloadUnits.clear();
     _compressedFiles.clear();
     _totalWaitToDownload = _totalToDownload = 0;
-    _percent = _sizeCollected = _totalSize = 0;
+    _percent = _percentByFile = _sizeCollected = _totalSize = 0;
     _downloadedSize.clear();
     _totalEnabled = false;
     
@@ -957,6 +958,10 @@ void AssetsManager::onSuccess(const std::string &srcUrl, const std::string &stor
         {
             // Reduce count only when unit found in _downloadUnits
             _totalWaitToDownload--;
+            
+            _percentByFile = 100 * (float)(_totalToDownload - _totalWaitToDownload) / _totalToDownload;
+            // Notify progression event
+            dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_PROGRESSION, "");
         }
         // Notify asset updated event
         dispatchUpdateEvent(EventAssetsManager::EventCode::ASSET_UPDATED, customId);

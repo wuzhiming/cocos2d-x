@@ -245,6 +245,9 @@ private:
     //! Download percent
     float _percent;
     
+    //! Download percent by file
+    float _percentByFile;
+    
     //! Indicate whether the total size should be enabled
     int _totalEnabled;
     
