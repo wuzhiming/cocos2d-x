@@ -141,6 +141,7 @@ protected:
     void downloadManifest();
     void parseManifest();
     void startUpdate();
+    void updateSucceed();
     bool decompress(const std::string &filename);
     void decompressDownloadedZip();
     

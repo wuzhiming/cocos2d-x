@@ -114,7 +114,9 @@ AssetsManager::~AssetsManager()
     _downloader->_onSuccess = nullptr;
     _downloader->_onProgress = nullptr;
     CC_SAFE_RELEASE(_localManifest);
-    CC_SAFE_RELEASE(_tempManifest);
+    // _tempManifest could share a ptr with _remoteManifest
+    if (_tempManifest != _remoteManifest)
+        CC_SAFE_RELEASE(_tempManifest);
     CC_SAFE_RELEASE(_remoteManifest);
 }
 
@@ -492,6 +494,7 @@ void AssetsManager::decompressDownloadedZip()
         }
         removeFile(zipfile);
     }
+    _compressedFiles.clear();
 }
 
 void AssetsManager::dispatchUpdateEvent(EventAssetsManager::EventCode code, const std::string &assetId/* = ""*/, const std::string &message/* = ""*/, int curle_code/* = CURLE_OK*/, int curlm_code/* = CURLM_OK*/)
@@ -642,6 +645,14 @@ void AssetsManager::startUpdate()
     // Check difference
     else
     {
+        // Temporary manifest not exists,
+        // it will be used to register the download states of each asset,
+        // in this case, it equals remote manifest.
+        if(!_tempManifest->isLoaded()) {
+            _tempManifest->release();
+            _tempManifest = _remoteManifest;
+        }
+        
         std::unordered_map<std::string, Manifest::AssetDiff> diff_map = _localManifest->genDiff(_remoteManifest);
         if (diff_map.size() == 0)
         {
@@ -684,7 +695,7 @@ void AssetsManager::startUpdate()
                 auto diffIt = diff_map.find(key);
                 if (diffIt == diff_map.end())
                 {
-                    _remoteManifest->setAssetDownloadState(key, Manifest::DownloadState::SUCCESSED);
+                    _tempManifest->setAssetDownloadState(key, Manifest::DownloadState::SUCCESSED);
                 }
             }
             
@@ -694,6 +705,26 @@ void AssetsManager::startUpdate()
     }
 
     _waitToUpdate = false;
+}
+
+void AssetsManager::updateSucceed()
+{
+    // Every thing is correctly downloaded, do the following
+    // 1. rename temporary manifest to valid manifest
+    renameFile(_storagePath, TEMP_MANIFEST_FILENAME, MANIFEST_FILENAME);
+    // 2. swap the localManifest
+    if (_localManifest != nullptr)
+        _localManifest->release();
+    _localManifest = _remoteManifest;
+    _remoteManifest = nullptr;
+    // 3. make local manifest take effect
+    prepareLocalManifest();
+    // 4. decompress all compressed files
+    decompressDownloadedZip();
+    // 5. Set update state
+    _updateState = State::UP_TO_DATE;
+    // 6. Notify finished event
+    dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_FINISHED);
 }
 
 void AssetsManager::checkUpdate()
@@ -801,6 +832,10 @@ void AssetsManager::updateAssets(const Downloader::DownloadUnits& assets)
             _downloadUnits = assets;
             _downloader->batchDownloadAsync(_downloadUnits, BATCH_UPDATE_ID);
         }
+        else if (size == 0 && _totalWaitToDownload == 0)
+        {
+            updateSucceed();
+        }
     }
 }
 
@@ -868,7 +903,7 @@ void AssetsManager::onProgress(double total, double downloaded, const std::strin
         if (!found)
         {
             // Set download state to DOWNLOADING, this will run only once in the download process
-            _remoteManifest->setAssetDownloadState(customId, Manifest::DownloadState::DOWNLOADING);
+            _tempManifest->setAssetDownloadState(customId, Manifest::DownloadState::DOWNLOADING);
             // Register the download size information
             _downloadedSize.emplace(customId, downloaded);
             _totalSize += total;
@@ -911,7 +946,7 @@ void AssetsManager::onSuccess(const std::string &srcUrl, const std::string &stor
         if (_failedUnits.size() > 0 || _totalWaitToDownload > 0)
         {
             // Save current download manifest information for resuming
-            _remoteManifest->saveToFile(_tempManifestPath);
+            _tempManifest->saveToFile(_tempManifestPath);
             
             decompressDownloadedZip();
             
@@ -920,22 +955,7 @@ void AssetsManager::onSuccess(const std::string &srcUrl, const std::string &stor
         }
         else
         {
-            // Every thing is correctly downloaded, do the following
-            // 1. rename temporary manifest to valid manifest
-            renameFile(_storagePath, TEMP_MANIFEST_FILENAME, MANIFEST_FILENAME);
-            // 2. swap the localManifest
-            if (_localManifest != nullptr)
-                _localManifest->release();
-            _localManifest = _remoteManifest;
-            _remoteManifest = nullptr;
-            // 3. make local manifest take effect
-            prepareLocalManifest();
-            // 4. decompress all compressed files
-            decompressDownloadedZip();
-            // 5. Set update state
-            _updateState = State::UP_TO_DATE;
-            // 6. Notify finished event
-            dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_FINISHED);
+            updateSucceed();
         }
     }
     else
@@ -945,7 +965,7 @@ void AssetsManager::onSuccess(const std::string &srcUrl, const std::string &stor
         if (assetIt != assets.end())
         {
             // Set download state to SUCCESSED
-            _remoteManifest->setAssetDownloadState(customId, Manifest::DownloadState::SUCCESSED);
+            _tempManifest->setAssetDownloadState(customId, Manifest::DownloadState::SUCCESSED);
             
             // Add file to need decompress list
             if (assetIt->second.compressed) {

@@ -139,6 +139,11 @@ void AssetsManagerLoaderScene::runThisTest()
                         _loadingBar->setPercent(percent);
                         _fileLoadingBar->setPercent(percentByFile);
                         CCLOG("%.2f", percent);
+                        
+                        std::string msg = event->getMessage();
+                        if (msg.size() > 0) {
+                            CCLOG("%s", msg.c_str());
+                        }
                     }
                 }
                     break;
