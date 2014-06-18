@@ -114,8 +114,8 @@ AssetsManager::~AssetsManager()
     _downloader->_onSuccess = nullptr;
     _downloader->_onProgress = nullptr;
     CC_SAFE_RELEASE(_localManifest);
-    // _tempManifest could share a ptr with _remoteManifest
-    if (_tempManifest != _remoteManifest)
+    // _tempManifest could share a ptr with _remoteManifest or _localManifest
+    if (_tempManifest != _localManifest && _tempManifest != _remoteManifest)
         CC_SAFE_RELEASE(_tempManifest);
     CC_SAFE_RELEASE(_remoteManifest);
 }
