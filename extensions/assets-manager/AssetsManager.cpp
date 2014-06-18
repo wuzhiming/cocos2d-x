@@ -166,7 +166,7 @@ void AssetsManager::loadLocalManifest(const std::string& manifestUrl)
     // Fail to load local manifest
     if (!_localManifest->isLoaded())
     {
-        CCLOG("AssetsManager : No local manifest file found error.");
+        CCLOG("AssetsManager : No local manifest file found error.\n");
         dispatchUpdateEvent(EventAssetsManager::EventCode::ERROR_NO_LOCAL_MANIFEST);
     }
 }
@@ -268,7 +268,7 @@ bool AssetsManager::removeDirectory(const std::string& path)
 {
     if (path.size() > 0 && path[path.size() - 1] != '/')
     {
-        CCLOGERROR("Fail to remove directory, invalid path: %s", path.c_str());
+        CCLOGERROR("Fail to remove directory, invalid path: %s\n", path.c_str());
         return false;
     }
 
@@ -322,7 +322,7 @@ bool AssetsManager::renameFile(const std::string &path, const std::string &oldna
     std::string newPath = path + name;
     if (rename(oldPath.c_str(), newPath.c_str()) != 0)
     {
-        CCLOGERROR("Fail to rename file %s to %s !", oldPath.c_str(), newPath.c_str());
+        CCLOGERROR("Fail to rename file %s to %s !\n", oldPath.c_str(), newPath.c_str());
         return false;
     }
     return true;
@@ -361,7 +361,7 @@ bool AssetsManager::decompress(const std::string &zip)
     size_t pos = zip.find_last_of("/\\");
     if (pos == std::string::npos)
     {
-        CCLOG("AssetsManager : no root path specified for zip file %s", zip.c_str());
+        CCLOG("AssetsManager : no root path specified for zip file %s\n", zip.c_str());
         return false;
     }
     const std::string rootPath = zip.substr(0, pos+1);
@@ -370,7 +370,7 @@ bool AssetsManager::decompress(const std::string &zip)
     unzFile zipfile = unzOpen(zip.c_str());
     if (! zipfile)
     {
-        CCLOG("AssetsManager : can not open downloaded zip file %s", zip.c_str());
+        CCLOG("AssetsManager : can not open downloaded zip file %s\n", zip.c_str());
         return false;
     }
     
@@ -378,7 +378,7 @@ bool AssetsManager::decompress(const std::string &zip)
     unz_global_info global_info;
     if (unzGetGlobalInfo(zipfile, &global_info) != UNZ_OK)
     {
-        CCLOG("AssetsManager : can not read file global info of %s", zip.c_str());
+        CCLOG("AssetsManager : can not read file global info of %s\n", zip.c_str());
         unzClose(zipfile);
         return false;
     }
@@ -401,7 +401,7 @@ bool AssetsManager::decompress(const std::string &zip)
                                   NULL,
                                   0) != UNZ_OK)
         {
-            CCLOG("AssetsManager : can not read compressed file info");
+            CCLOG("AssetsManager : can not read compressed file info\n");
             unzClose(zipfile);
             return false;
         }
@@ -416,7 +416,7 @@ bool AssetsManager::decompress(const std::string &zip)
             if ( !createDirectory(fullPath) )
             {
                 // Failed to create directory
-                CCLOG("AssetsManager : can not create directory %s", fullPath.c_str());
+                CCLOG("AssetsManager : can not create directory %s\n", fullPath.c_str());
                 unzClose(zipfile);
                 return false;
             }
@@ -427,7 +427,7 @@ bool AssetsManager::decompress(const std::string &zip)
             // Open current file.
             if (unzOpenCurrentFile(zipfile) != UNZ_OK)
             {
-                CCLOG("AssetsManager : can not extract file %s", fileName);
+                CCLOG("AssetsManager : can not extract file %s\n", fileName);
                 unzClose(zipfile);
                 return false;
             }
@@ -436,7 +436,7 @@ bool AssetsManager::decompress(const std::string &zip)
             FILE *out = fopen(fullPath.c_str(), "wb");
             if (!out)
             {
-                CCLOG("AssetsManager : can not create decompress destination file %s", fullPath.c_str());
+                CCLOG("AssetsManager : can not create decompress destination file %s\n", fullPath.c_str());
                 unzCloseCurrentFile(zipfile);
                 unzClose(zipfile);
                 return false;
@@ -449,7 +449,7 @@ bool AssetsManager::decompress(const std::string &zip)
                 error = unzReadCurrentFile(zipfile, readBuffer, BUFFER_SIZE);
                 if (error < 0)
                 {
-                    CCLOG("AssetsManager : can not read zip file %s, error code is %d", fileName, error);
+                    CCLOG("AssetsManager : can not read zip file %s, error code is %d\n", fileName, error);
                     fclose(out);
                     unzCloseCurrentFile(zipfile);
                     unzClose(zipfile);
@@ -472,7 +472,7 @@ bool AssetsManager::decompress(const std::string &zip)
         {
             if (unzGoToNextFile(zipfile) != UNZ_OK)
             {
-                CCLOG("AssetsManager : can not read next file for decompressing");
+                CCLOG("AssetsManager : can not read next file for decompressing\n");
                 unzClose(zipfile);
                 return false;
             }
@@ -641,6 +641,9 @@ void AssetsManager::startUpdate()
         
         _totalWaitToDownload = _totalToDownload = (int)_downloadUnits.size();
         _downloader->batchDownloadAsync(_downloadUnits, BATCH_UPDATE_ID);
+        
+        std::string msg = StringUtils::format("Resuming from previous unfinished update, %d files remains to be finished.", _totalToDownload);
+        dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_PROGRESSION, "", msg);
     }
     // Check difference
     else
@@ -701,6 +704,9 @@ void AssetsManager::startUpdate()
             
             _totalWaitToDownload = _totalToDownload = (int)_downloadUnits.size();
             _downloader->batchDownloadAsync(_downloadUnits, BATCH_UPDATE_ID);
+            
+            std::string msg = StringUtils::format("Start to update %d files from remote package.", _totalToDownload);
+            dispatchUpdateEvent(EventAssetsManager::EventCode::UPDATE_PROGRESSION, "", msg);
         }
     }
 
@@ -731,7 +737,7 @@ void AssetsManager::checkUpdate()
 {
     if (!_localManifest->isLoaded())
     {
-        CCLOG("AssetsManager : No local manifest file found error.");
+        CCLOG("AssetsManager : No local manifest file found error.\n");
         dispatchUpdateEvent(EventAssetsManager::EventCode::ERROR_NO_LOCAL_MANIFEST);
         return;
     }
@@ -763,7 +769,7 @@ void AssetsManager::update()
 {
     if (!_localManifest->isLoaded())
     {
-        CCLOG("AssetsManager : No local manifest file found error.");
+        CCLOG("AssetsManager : No local manifest file found error.\n");
         dispatchUpdateEvent(EventAssetsManager::EventCode::ERROR_NO_LOCAL_MANIFEST);
         return;
     }
@@ -846,6 +852,7 @@ const Downloader::DownloadUnits& AssetsManager::getFailedAssets() const
 
 void AssetsManager::downloadFailedAssets()
 {
+    CCLOG("AssetsManager : Start update %lu failed assets.\n", _failedUnits.size());
     updateAssets(_failedUnits);
 }
 
