@@ -25,8 +25,7 @@ package org.cocos2dx.lib;
 
 import org.cocos2dx.lib.Cocos2dxHelper.Cocos2dxHelperListener;
 
-import com.chukong.cocoplay.plugin.client.CocoPlayPluginBaseActivity;
-
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -39,7 +38,7 @@ import android.util.Log;
 import android.widget.FrameLayout;
 import android.preference.PreferenceManager.OnActivityResultListener;
 
-public abstract class Cocos2dxActivity extends CocoPlayPluginBaseActivity implements Cocos2dxHelperListener {
+public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelperListener {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -52,7 +51,7 @@ public abstract class Cocos2dxActivity extends CocoPlayPluginBaseActivity implem
 	
 	private Cocos2dxGLSurfaceView mGLSurfaceView;
 	private Cocos2dxHandler mHandler;
-	private static Context sContext = null;
+	private static Cocos2dxActivity sContext = null;
 	private Cocos2dxVideoHelper mVideoHelper = null;
 	
 	public static Context getContext() {
@@ -87,10 +86,10 @@ public abstract class Cocos2dxActivity extends CocoPlayPluginBaseActivity implem
 
 		onLoadNativeLibraries();
 
-		sContext = that;
-    	this.mHandler = new Cocos2dxHandler(that);
+		sContext = this;
+    	this.mHandler = new Cocos2dxHandler(this);
     	
-    	Cocos2dxHelper.init(that, this);
+    	Cocos2dxHelper.init(this);
     	
     	this.init();
     	if (mVideoHelper == null) {
@@ -164,14 +163,14 @@ public abstract class Cocos2dxActivity extends CocoPlayPluginBaseActivity implem
         ViewGroup.LayoutParams framelayout_params =
             new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                        ViewGroup.LayoutParams.MATCH_PARENT);
-        mFrameLayout = new FrameLayout(that);
+        mFrameLayout = new FrameLayout(this);
         mFrameLayout.setLayoutParams(framelayout_params);
 
         // Cocos2dxEditText layout
         ViewGroup.LayoutParams edittext_layout_params =
             new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                        ViewGroup.LayoutParams.WRAP_CONTENT);
-        Cocos2dxEditText edittext = new Cocos2dxEditText(that);
+        Cocos2dxEditText edittext = new Cocos2dxEditText(this);
         edittext.setLayoutParams(edittext_layout_params);
 
         // ...add to FrameLayout
@@ -195,7 +194,7 @@ public abstract class Cocos2dxActivity extends CocoPlayPluginBaseActivity implem
 	}
 	
     public Cocos2dxGLSurfaceView onCreateView() {
-    	return new Cocos2dxGLSurfaceView(that);
+    	return new Cocos2dxGLSurfaceView(this);
     }
 
    private final static boolean isAndroidEmulator() {

@@ -1,27 +1,27 @@
 /****************************************************************************
-Copyright (c) 2010-2013 cocos2d-x.org
-Copyright (c) 2013-2014 Chukong Technologies Inc.
-
-http://www.cocos2d-x.org
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-****************************************************************************/
+ Copyright (c) 2010-2013 cocos2d-x.org
+ Copyright (c) 2013-2014 Chukong Technologies Inc.
+ 
+ http://www.cocos2d-x.org
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ****************************************************************************/
 
 #include "CCFileUtils.h"
 
@@ -34,21 +34,19 @@ THE SOFTWARE.
 
 #include "tinyxml2.h"
 #include "unzip.h"
-
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
-
-#else
 #include <sys/stat.h>
+
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32) && (CC_TARGET_PLATFORM != CC_PLATFORM_WP8) && (CC_TARGET_PLATFORM != CC_PLATFORM_WINRT)
 #include <sys/types.h>
+#include <errno.h>
 #include <dirent.h>
 #endif
-
 
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_IOS) && (CC_TARGET_PLATFORM != CC_PLATFORM_MAC)
 
 NS_CC_BEGIN
 
-typedef enum 
+typedef enum
 {
     SAX_NONE = 0,
     SAX_KEY,
@@ -72,52 +70,52 @@ public:
     SAXResult _resultType;
 	ValueMap _rootDict;
 	ValueVector _rootArray;
-
+    
     std::string _curKey;   ///< parsed key
     std::string _curValue; // parsed value
     SAXState _state;
-
+    
 	ValueMap*  _curDict;
     ValueVector* _curArray;
-
+    
 	std::stack<ValueMap*> _dictStack;
     std::stack<ValueVector*> _arrayStack;
     std::stack<SAXState>  _stateStack;
-
+    
 public:
-    DictMaker()        
-        : _resultType(SAX_RESULT_NONE)
+    DictMaker()
+    : _resultType(SAX_RESULT_NONE)
     {
     }
-
+    
     ~DictMaker()
     {
     }
-
+    
     ValueMap dictionaryWithContentsOfFile(const std::string& fileName)
     {
         _resultType = SAX_RESULT_DICT;
         SAXParser parser;
-
+        
         CCASSERT(parser.init("UTF-8"), "The file format isn't UTF-8");
         parser.setDelegator(this);
-
+        
         parser.parse(fileName);
 		return _rootDict;
     }
-
+    
     ValueVector arrayWithContentsOfFile(const std::string& fileName)
     {
         _resultType = SAX_RESULT_ARRAY;
         SAXParser parser;
-
+        
         CCASSERT(parser.init("UTF-8"), "The file format isn't UTF-8");
         parser.setDelegator(this);
-
+        
         parser.parse(fileName);
 		return _rootArray;
     }
-
+    
     void startElement(void *ctx, const char *name, const char **atts)
     {
         CC_UNUSED_PARAM(ctx);
@@ -129,15 +127,15 @@ public:
             {
                 _curDict = &_rootDict;
             }
-
+            
             _state = SAX_DICT;
-
+            
             SAXState preState = SAX_NONE;
             if (! _stateStack.empty())
             {
                 preState = _stateStack.top();
             }
-
+            
             if (SAX_ARRAY == preState)
             {
                 // add a new dictionary into the array
@@ -152,7 +150,7 @@ public:
                 (*preDict)[_curKey] = Value(ValueMap());
 				_curDict = &(*preDict)[_curKey].asValueMap();
             }
-
+            
             // record the dict state
             _stateStack.push(_state);
             _dictStack.push(_curDict);
@@ -176,7 +174,7 @@ public:
         else if (sName == "array")
         {
             _state = SAX_ARRAY;
-
+            
 			if (_resultType == SAX_RESULT_ARRAY && _rootArray.empty())
             {
 				_curArray = &_rootArray;
@@ -186,7 +184,7 @@ public:
             {
                 preState = _stateStack.top();
             }
-
+            
             if (preState == SAX_DICT)
             {
                 (*_curDict)[_curKey] = Value(ValueVector());
@@ -208,7 +206,7 @@ public:
             _state = SAX_NONE;
         }
     }
-
+    
     void endElement(void *ctx, const char *name)
     {
         CC_UNUSED_PARAM(ctx);
@@ -274,13 +272,13 @@ public:
                 else
                     (*_curDict)[_curKey] = Value(atof(_curValue.c_str()));
             }
-
+            
             _curValue.clear();
         }
         
         _state = SAX_NONE;
     }
-
+    
     void textHandler(void *ctx, const char *ch, int len)
     {
         CC_UNUSED_PARAM(ctx);
@@ -288,18 +286,18 @@ public:
         {
             return;
         }
-
+        
         SAXState curState = _stateStack.empty() ? SAX_DICT : _stateStack.top();
         const std::string text = std::string((char*)ch,0,len);
-
+        
         switch(_state)
         {
-        case SAX_KEY:
-            _curKey = text;
-            break;
-        case SAX_INT:
-        case SAX_REAL:
-        case SAX_STRING:
+            case SAX_KEY:
+                _curKey = text;
+                break;
+            case SAX_INT:
+            case SAX_REAL:
+            case SAX_STRING:
             {
                 if (curState == SAX_DICT)
                 {
@@ -308,9 +306,9 @@ public:
                 
                 _curValue.append(text);
             }
-            break;
-        default:
-            break;
+                break;
+            default:
+                break;
         }
     }
 };
@@ -402,7 +400,7 @@ static tinyxml2::XMLElement* generateElementForObject(const Value& value, tinyxm
         node->LinkEndChild(content);
         return node;
     }
-
+    
     // object is real
     if (value.getType() == Value::Type::FLOAT || value.getType() == Value::Type::DOUBLE)
     {
@@ -417,8 +415,8 @@ static tinyxml2::XMLElement* generateElementForObject(const Value& value, tinyxm
 		tinyxml2::XMLElement* node = doc->NewElement(value.asString().c_str());
 		return node;
     }
-
-
+    
+    
     // object is Array
     if (value.getType() == Value::Type::VECTOR)
         return generateElementForArray(value.asValueVector(), doc);
@@ -458,7 +456,7 @@ static tinyxml2::XMLElement* generateElementForDict(const ValueMap& dict, tinyxm
 static tinyxml2::XMLElement* generateElementForArray(const ValueVector& array, tinyxml2::XMLDocument *pDoc)
 {
     tinyxml2::XMLElement* rootNode = pDoc->NewElement("array");
-
+    
     for(const auto &value : array) {
         tinyxml2::XMLElement *element = generateElementForObject(value, pDoc);
         if (element)
@@ -612,38 +610,38 @@ unsigned char* FileUtils::getFileDataFromZip(const std::string& zipFilePath, con
     unsigned char * buffer = nullptr;
     unzFile file = nullptr;
     *size = 0;
-
-    do 
+    
+    do
     {
         CC_BREAK_IF(zipFilePath.empty());
-
+        
         file = unzOpen(zipFilePath.c_str());
         CC_BREAK_IF(!file);
-
+        
         int ret = unzLocateFile(file, filename.c_str(), 1);
         CC_BREAK_IF(UNZ_OK != ret);
-
+        
         char filePathA[260];
         unz_file_info fileInfo;
         ret = unzGetCurrentFileInfo(file, &fileInfo, filePathA, sizeof(filePathA), nullptr, 0, nullptr, 0);
         CC_BREAK_IF(UNZ_OK != ret);
-
+        
         ret = unzOpenCurrentFile(file);
         CC_BREAK_IF(UNZ_OK != ret);
-
+        
         buffer = (unsigned char*)malloc(fileInfo.uncompressed_size);
         int CC_UNUSED readedSize = unzReadCurrentFile(file, buffer, static_cast<unsigned>(fileInfo.uncompressed_size));
         CCASSERT(readedSize == 0 || readedSize == (int)fileInfo.uncompressed_size, "the file size is wrong");
-
+        
         *size = fileInfo.uncompressed_size;
         unzCloseCurrentFile(file);
     } while (0);
-
+    
     if (file)
     {
         unzClose(file);
     }
-
+    
     return buffer;
 }
 
@@ -653,7 +651,7 @@ std::string FileUtils::getNewFilename(const std::string &filename) const
     
     // in Lookup Filename dictionary ?
     auto iter = _filenameLookupDict.find(filename);
-
+    
     if (iter == _filenameLookupDict.end())
     {
         newFileName = filename;
@@ -699,7 +697,7 @@ std::string FileUtils::fullPathForFilename(const std::string &filename)
     {
         return filename;
     }
-
+    
     // Already Cached ?
     auto cacheIter = _fullPathCache.find(filename);
     if( cacheIter != _fullPathCache.end() )
@@ -728,7 +726,7 @@ std::string FileUtils::fullPathForFilename(const std::string &filename)
     }
     
     CCLOG("cocos2d: fullPathForFilename: No file found at %s. Possible missing file.", filename.c_str());
-
+    
     // XXX: Should it return nullptr ? or an empty string ?
     // The file wasn't found, return the file name passed in.
     return filename;
@@ -770,7 +768,7 @@ void FileUtils::addSearchResolutionsOrder(const std::string &order)
     std::string resOrder = order;
     if (!resOrder.empty() && resOrder[resOrder.length()-1] != '/')
         resOrder.append("/");
-        
+    
     _searchResolutionsOrderArray.push_back(resOrder);
 }
 
@@ -823,7 +821,7 @@ void FileUtils::addSearchPath(const std::string &searchpath)
     std::string prefix;
     if (!isAbsolutePath(searchpath))
         prefix = _defaultResRootPath;
-
+    
     std::string path = prefix + searchpath;
     if (path.length() > 0 && path[path.length()-1] != '/')
     {
@@ -834,7 +832,7 @@ void FileUtils::addSearchPath(const std::string &searchpath)
 
 void FileUtils::setFilenameLookupDictionary(const ValueMap& filenameLookupDict)
 {
-    _fullPathCache.clear();    
+    _fullPathCache.clear();
     _filenameLookupDict = filenameLookupDict;
 }
 
@@ -860,7 +858,7 @@ void FileUtils::loadFilenameLookupDictionaryFromFile(const std::string &filename
 
 std::string FileUtils::getFullPathForDirectoryAndFilename(const std::string& directory, const std::string& filename)
 {
-    // get directory+filename, safely adding '/' as necessary 
+    // get directory+filename, safely adding '/' as necessary
     std::string ret = directory;
     if (directory.size() && directory[directory.size()-1] != '/'){
         ret += '/';
@@ -935,7 +933,7 @@ bool FileUtils::writeStringToFile(const std::string& content, const std::string&
     {
         return false;
     }
-
+    
     fwrite(content.data(), content.length(), 1, fp);
     fclose(fp);
     return true;
@@ -944,20 +942,37 @@ bool FileUtils::writeStringToFile(const std::string& content, const std::string&
 bool FileUtils::isExist(const std::string& path)
 {
     CCASSERT(!path.empty(), "Invalid path");
-    
+ 
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
 	struct stat st;
 	return stat(path.c_str(), &st) == 0;
+#else
+    if ((GetFileAttributesA(path.c_str())) != INVALID_FILE_ATTRIBUTES)
+    {
+		return true;
+    }
+    return false;
+#endif
 }
 
 bool FileUtils::isDirectory(const std::string& dirPath)
 {
     CCASSERT(!dirPath.empty(), "Invalid path");
     
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
 	struct stat st;
 	if (stat(dirPath.c_str(), &st) == 0)
 		return S_ISDIR(st.st_mode);
-
+    
 	return false;
+#else
+    if ((GetFileAttributesA(path.c_str())) != INVALID_FILE_ATTRIBUTES &&
+        (dwAttrib & FILE_ATTRIBUTE_DIRECTORY))
+    {
+		return true;
+    }
+    return false;
+#endif
 }
 
 bool FileUtils::createDirectory(const std::string& dirPath)
@@ -967,11 +982,23 @@ bool FileUtils::createDirectory(const std::string& dirPath)
     if (isExist(dirPath) && isDirectory(dirPath))
         return false;
     
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
     if (mkdir(dirPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0)
     {
         CCLOGERROR("Create directory (%s) failed", dirPath.c_str());
     }
     return true;
+#else
+    if ((GetFileAttributesA(path.c_str())) == INVALID_FILE_ATTRIBUTES)
+    {
+		BOOL ret = CreateDirectoryA(dirPath.c_str(), NULL);
+        if (!ret && ERROR_ALREADY_EXISTS != GetLastError())
+        {
+            return false;
+        }
+    }
+    return true;
+#endif
 }
 
 bool FileUtils::createDirectories(const std::string& path)
@@ -1002,35 +1029,135 @@ bool FileUtils::createDirectories(const std::string& path)
         }
     }
     
-    // Remove downloaded files
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
     DIR *dir = NULL;
     
     // Create path recursively
     subpath = "";
-    for (int i = 0; i < dirs.size(); i++) {
+    for (int i = 0; i < dirs.size(); ++i) {
         subpath += dirs[i];
-        dir = opendir (subpath.c_str());
+        dir = opendir(subpath.c_str());
         if (!dir)
         {
-            CCLOG("create dir %s", subpath.c_str());
-            if (0 != mkdir(subpath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO))
+            int ret = mkdir(subpath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+            if (ret != 0 && (errno != EEXIST))
             {
-                CCLOGERROR("Create dir %s failed!", subpath.c_str());
                 return false;
             }
-            CCLOG("create dir %s succeed!", subpath.c_str());
         }
     }
+    return true;
 #else
     if ((GetFileAttributesA(path.c_str())) == INVALID_FILE_ATTRIBUTES)
     {
-        // TODO: create recursively the path on windows
-        CreateDirectoryA(path.c_str(), 0);
+		subpath = "";
+		for(int i = 0 ; i < dirs.size() ; ++i)
+		{
+			subpath += dirs[i];
+			BOOL ret = CreateDirectoryA(subpath.c_str(), NULL);
+            if (!ret && ERROR_ALREADY_EXISTS != GetLastError())
+            {
+                return false;
+            }
+		}
     }
-#endif
-    
     return true;
+#endif
+}
+
+bool FileUtils::removeDirectory(const std::string& path)
+{
+    if (path.size() > 0 && path[path.size() - 1] != '/')
+    {
+        CCLOGERROR("Fail to remove directory, invalid path: %s", path.c_str());
+        return false;
+    }
+    
+    // Remove downloaded files
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
+    std::string command = "rm -r ";
+    // Path may include space.
+    command += "\"" + path + "\"";
+    if (system(command.c_str()) >= 0)
+        return true;
+    else
+        return false;
+#else
+    std::string command = "rd /s /q ";
+    // Path may include space.
+    command += "\"" + path + "\"";
+	if (WinExec(command.c_str(), SW_HIDE) > 31)
+        return true;
+    else
+        return false;
+#endif
+}
+
+bool FileUtils::removeFile(const std::string &path)
+{
+    // Remove downloaded file
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
+    std::string command = "rm -f ";
+    // Path may include space.
+    command += "\"" + path + "\"";
+    if (system(command.c_str()) >= 0)
+        return true;
+    else
+        return false;
+#else
+    std::string command = "del /q ";
+    // Path may include space.
+    command += "\"" + path + "\"";
+	if (WinExec(command.c_str(), SW_HIDE) > 31)
+        return true;
+    else
+        return false;
+#endif
+}
+
+bool FileUtils::renameFile(const std::string &path, const std::string &oldname, const std::string &name)
+{
+    CCASSERT(!path.empty(), "Invalid path");
+    
+    // Rename a file
+#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
+    std::string oldPath = path + oldname;
+    std::string newPath = path + name;
+    if (rename(oldPath.c_str(), newPath.c_str()) != 0)
+    {
+        CCLOGERROR("Fail to rename file %s to %s !", oldPath.c_str(), newPath.c_str());
+        return false;
+    }
+    return true;
+#else
+    std::string command = "ren ";
+    // Path may include space.
+    command += "\"" + path + oldname + "\" \"" + name + "\"";
+	if (WinExec(command.c_str(), SW_HIDE) > 31)
+        return true;
+    else
+        return false;
+#endif
+}
+
+long FileUtils::getFileSize(const std::string &filepath)
+{
+    CCASSERT(!filepath.empty(), "Invalid path");
+    
+    struct stat info;
+    // Get data associated with "crt_stat.c":
+    int result = stat( filepath.c_str(), &info );
+    
+    // Check if statistics are valid:
+    if( result != 0 )
+    {
+        // Failed
+        return -1;
+    }
+    else
+    {
+        return (long)(info.st_size);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
