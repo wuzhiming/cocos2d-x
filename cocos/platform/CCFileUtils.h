@@ -328,6 +328,51 @@ public:
      */
     virtual ValueVector getValueVectorFromFile(const std::string& filename);
     
+    /**
+     *  Writes string to a file
+     */
+    virtual bool writeStringToFile(const std::string& content, const std::string& fullpath);
+    
+    /**
+     *  Checks whether the file or directory exists
+     */
+    virtual bool isExist(const std::string& path);
+    
+    /**
+     *  Checks whether the path is a directory
+     */
+    virtual bool isDirectory(const std::string& dirPath);
+    
+    /**
+     *  Creates a directory without recursive
+     */
+    virtual bool createDirectory(const std::string& dirPath);
+    
+    /**
+     *  Creates a directory recursively
+     */
+    virtual bool createDirectories(const std::string& dirPath);
+    
+    /**
+     *  Remove a directory
+     */
+    virtual bool removeDirectory(const std::string& path);
+    
+    /**
+     *  Remove a file
+     */
+    virtual bool removeFile(const std::string &path);
+    
+    /**
+     *  Rename a file under the given directory
+     */
+    virtual bool renameFile(const std::string &path, const std::string &oldname, const std::string &name);
+    
+    /**
+     *  Retrieve the file size
+     */
+    virtual long getFileSize(const std::string &filepath);
+    
     /** Returns the full path cache */
     const std::unordered_map<std::string, std::string>& getFullPathCache() const { return _fullPathCache; }
     
