@@ -26,7 +26,6 @@ package org.cocos2dx.lib;
 
 import java.lang.ref.WeakReference;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Handler;
@@ -42,13 +41,13 @@ public class Cocos2dxHandler extends Handler {
 	// ===========================================================
 	// Fields
 	// ===========================================================
-	private WeakReference<Activity> mActivity;
+	private WeakReference<Cocos2dxActivity> mActivity;
 	
 	// ===========================================================
 	// Constructors
 	// ===========================================================
-	public Cocos2dxHandler(Activity activity) {
-		this.mActivity = new WeakReference<Activity>(activity);
+	public Cocos2dxHandler(Cocos2dxActivity activity) {
+		this.mActivity = new WeakReference<Cocos2dxActivity>(activity);
 	}
 
 	// ===========================================================
@@ -75,7 +74,7 @@ public class Cocos2dxHandler extends Handler {
 	}
 	
 	private void showDialog(Message msg) {
-		Activity theActivity = this.mActivity.get();
+		Cocos2dxActivity theActivity = this.mActivity.get();
 		DialogMessage dialogMessage = (DialogMessage)msg.obj;
 		new AlertDialog.Builder(theActivity)
 		.setTitle(dialogMessage.titile)
