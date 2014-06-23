@@ -872,19 +872,19 @@ std::string FileUtils::getFullPathForDirectoryAndFilename(const std::string& dir
     return ret;
 }
 
-bool FileUtils::isFileExist(const std::string& filename) const
+std::string FileUtils::searchFullPathForFilename(const std::string& filename) const
 {
     // If filename is absolute path, we don't need to consider 'search paths' and 'resolution orders'.
     if (isAbsolutePath(filename))
     {
-        return isFileExistInternal(filename);
+        return filename;
     }
     
     // Already Cached ?
     auto cacheIter = _fullPathCache.find(filename);
     if( cacheIter != _fullPathCache.end() )
     {
-        return true;
+        return cacheIter->second;
     }
     
     // Get the new file name.
@@ -902,16 +902,11 @@ bool FileUtils::isFileExist(const std::string& filename) const
             {
                 // Using the filename passed in as key.
                 const_cast<FileUtils*>(this)->_fullPathCache.insert(std::make_pair(filename, fullpath));
-                return true;
+                return fullpath;
             }
         }
     }
-    return false;
-}
-
-bool FileUtils::isAbsolutePath(const std::string& path) const
-{
-    return (path[0] == '/');
+    return "";
 }
 
 bool FileUtils::writeStringToFile(const std::string& content, const std::string& fullpath)
@@ -923,7 +918,7 @@ bool FileUtils::writeStringToFile(const std::string& content, const std::string&
     }
     std::string dir = fullpath.substr(0, pos);
     
-    if (!isExist(dir))
+    if (!isFileExist(dir))
     {
         createDirectories(dir);
     }
@@ -939,23 +934,28 @@ bool FileUtils::writeStringToFile(const std::string& content, const std::string&
     return true;
 }
 
-bool FileUtils::isExist(const std::string& path)
+bool FileUtils::isFileExist(const std::string& filename) const
 {
-    CCASSERT(!path.empty(), "Invalid path");
- 
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
-	struct stat st;
-	return stat(path.c_str(), &st) == 0;
-#else
-    if ((GetFileAttributesA(path.c_str())) != INVALID_FILE_ATTRIBUTES)
+    if (isAbsolutePath(filename))
     {
-		return true;
+        return isFileExistInternal(filename);
     }
-    return false;
-#endif
+    else
+    {
+        std::string fullpath = searchFullPathForFilename(filename);
+        if (fullpath.empty())
+            return false;
+        else
+            return true;
+    }
 }
 
-bool FileUtils::isDirectory(const std::string& dirPath)
+bool FileUtils::isAbsolutePath(const std::string& path) const
+{
+    return (path[0] == '/');
+}
+
+bool FileUtils::isDirectoryExist(const std::string& dirPath)
 {
     CCASSERT(!dirPath.empty(), "Invalid path");
     
@@ -966,8 +966,9 @@ bool FileUtils::isDirectory(const std::string& dirPath)
     
 	return false;
 #else
-    if ((GetFileAttributesA(path.c_str())) != INVALID_FILE_ATTRIBUTES &&
-        (dwAttrib & FILE_ATTRIBUTE_DIRECTORY))
+    unsigned long fAttrib = GetFileAttributesA(dirPath.c_str());
+    if (fAttrib != INVALID_FILE_ATTRIBUTES &&
+        (fAttrib & FILE_ATTRIBUTE_DIRECTORY))
     {
 		return true;
     }
@@ -979,7 +980,7 @@ bool FileUtils::createDirectory(const std::string& dirPath)
 {
     CCASSERT(!dirPath.empty(), "Invalid path");
     
-    if (isExist(dirPath) && isDirectory(dirPath))
+    if (isDirectoryExist(dirPath))
         return false;
     
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
@@ -989,7 +990,7 @@ bool FileUtils::createDirectory(const std::string& dirPath)
     }
     return true;
 #else
-    if ((GetFileAttributesA(path.c_str())) == INVALID_FILE_ATTRIBUTES)
+    if (GetFileAttributesA(dirPath.c_str()) == INVALID_FILE_ATTRIBUTES)
     {
 		BOOL ret = CreateDirectoryA(dirPath.c_str(), NULL);
         if (!ret && ERROR_ALREADY_EXISTS != GetLastError())
@@ -1144,9 +1145,17 @@ long FileUtils::getFileSize(const std::string &filepath)
 {
     CCASSERT(!filepath.empty(), "Invalid path");
     
+    std::string fullpath = filepath;
+    if (!isAbsolutePath(filepath))
+    {
+        fullpath = searchFullPathForFilename(filepath);
+        if (fullpath.empty())
+            return 0;
+    }
+    
     struct stat info;
     // Get data associated with "crt_stat.c":
-    int result = stat( filepath.c_str(), &info );
+    int result = stat( fullpath.c_str(), &info );
     
     // Check if statistics are valid:
     if( result != 0 )
