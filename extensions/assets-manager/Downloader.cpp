@@ -215,7 +215,7 @@ void Downloader::prepareDownload(const std::string &srcUrl, const std::string &s
     
     // Create a file to save file.
     const std::string outFileName = storagePath + TEMP_EXT;
-    if (_supportResuming && resumeDownload && _fileUtils->isExist(outFileName))
+    if (_supportResuming && resumeDownload && _fileUtils->isFileExist(outFileName))
     {
         fDesc->fp = fopen(outFileName.c_str(), "ab");
     }
