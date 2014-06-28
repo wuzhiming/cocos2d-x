@@ -259,8 +259,8 @@ THE SOFTWARE.
 #include "2d/CCComponentContainer.h"
 
 //3d
-#include "3d/CCSprite3D.h"
-#include "3d/CCMesh.h"
+//#include "3d/CCSprite3D.h"
+//#include "3d/CCMesh.h"
 
 // Audio
 #include "audio/include/SimpleAudioEngine.h"
