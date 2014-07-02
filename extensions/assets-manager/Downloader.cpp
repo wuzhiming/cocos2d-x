@@ -47,7 +47,8 @@ size_t curlWriteFunc(void *ptr, size_t size, size_t nmemb, void *userdata)
     return written;
 }
 
-int downloadProgressFunc(Downloader::ProgressData *ptr, double totalToDownload, double nowDownloaded, double totalToUpLoad, double nowUpLoaded)
+// This is only for batchDownload process, will notify file succeed event in progress function
+int batchDownloadProgressFunc(Downloader::ProgressData *ptr, double totalToDownload, double nowDownloaded, double totalToUpLoad, double nowUpLoaded)
 {
     if (ptr->totalToDownload == 0)
     {
@@ -62,8 +63,6 @@ int downloadProgressFunc(Downloader::ProgressData *ptr, double totalToDownload, 
         
         if (nowDownloaded == totalToDownload)
         {
-            AssetsManager::renameFile(data.path, data.name + TEMP_EXT, data.name);
-            
             Director::getInstance()->getScheduler()->performFunctionInCocosThread([=]{
                 if (!data.downloader.expired())
                 {
@@ -102,6 +101,35 @@ int downloadProgressFunc(Downloader::ProgressData *ptr, double totalToDownload, 
     return 0;
 }
 
+// Compare to batchDownloadProgressFunc, this only handles progress information notification
+int downloadProgressFunc(Downloader::ProgressData *ptr, double totalToDownload, double nowDownloaded, double totalToUpLoad, double nowUpLoaded)
+{
+    if (ptr->totalToDownload == 0)
+    {
+        ptr->totalToDownload = totalToDownload;
+    }
+    
+    if (ptr->downloaded != nowDownloaded)
+    {
+        ptr->downloaded = nowDownloaded;
+        Downloader::ProgressData data = *ptr;
+        
+        Director::getInstance()->getScheduler()->performFunctionInCocosThread([=]{
+            if (!data.downloader.expired())
+            {
+                std::shared_ptr<Downloader> downloader = data.downloader.lock();
+                
+                auto callback = downloader->getProgressCallback();
+                if (callback != nullptr)
+                {
+                    callback(totalToDownload, nowDownloaded, data.url, data.customId);
+                }
+            }
+        });
+    }
+    
+    return 0;
+}
 
 Downloader::Downloader()
 : _onError(nullptr)
@@ -299,6 +327,24 @@ void Downloader::download(const std::string &srcUrl, const std::string &customId
     fclose(fDesc.fp);
     curl_easy_cleanup(curl);
     
+    // This can only be done after fclose
+    if (res == CURLE_OK)
+    {
+        AssetsManager::renameFile(data.path, data.name + TEMP_EXT, data.name);
+    }
+    
+    Director::getInstance()->getScheduler()->performFunctionInCocosThread([=]{
+        if (!ptr.expired())
+        {
+            std::shared_ptr<Downloader> downloader = ptr.lock();
+            
+            auto successCB = downloader->getSuccessCallback();
+            if (successCB != nullptr)
+            {
+                successCB(data.url, data.path + data.name, data.customId);
+            }
+        }
+    });
 }
 
 void Downloader::batchDownloadAsync(const DownloadUnits &units, const std::string &batchId/* = ""*/)
@@ -387,7 +433,7 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteFunc);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, fDesc->fp);
             curl_easy_setopt(curl, CURLOPT_NOPROGRESS, false);
-            curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, downloadProgressFunc);
+            curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, batchDownloadProgressFunc);
             curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, data);
             curl_easy_setopt(curl, CURLOPT_FAILONERROR, true);
             if (_connectionTimeout) curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, _connectionTimeout);
@@ -499,12 +545,16 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
         curl_easy_cleanup(single);
     }
     
-    // Check unfinished files and notify errors
+    // Check unfinished files and notify errors, succeed files will be renamed from temporary file name to real name
     for (auto it = _progDatas.begin(); it != _progDatas.end(); ++it) {
         ProgressData *data = *it;
-        if (data->downloaded < data->totalToDownload)
+        if (data->downloaded < data->totalToDownload || data->totalToDownload == 0)
         {
             this->notifyError(ErrorCode::NETWORK, "Unable to download file", data->customId);
+        }
+        else
+        {
+            AssetsManager::renameFile(data->path, data->name + TEMP_EXT, data->name);
         }
     }
     
