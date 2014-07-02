@@ -36,6 +36,10 @@
 #include <dirent.h>
 #endif
 
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
+#include <regex>
+#endif
+
 #include "unzip.h"
 
 NS_CC_EXT_BEGIN
@@ -327,10 +331,22 @@ bool AssetsManager::renameFile(const std::string &path, const std::string &oldna
     }
     return true;
 #else
-    std::string command = "ren ";
-    // Path may include space.
-    command += "\"" + path + oldname + "\" \"" + name + "\"";
-	if (WinExec(command.c_str(), SW_HIDE) > 31)
+    std::string oldfile = path + oldname;
+    std::string newfile = path + name;
+
+    
+    std::regex pat("\/");
+    std::string _old = std::regex_replace(oldfile, pat, "\\");
+    std::string _new = std::regex_replace(newfile, pat, "\\");
+
+    if(FileUtils::getInstance()->isFileExist(_new))
+    {
+        DeleteFileA(_new.c_str());
+    }
+    
+    MoveFileA(_old.c_str(), _new.c_str());
+
+    if(0 == GetLastError())
         return true;
     else
         return false;
