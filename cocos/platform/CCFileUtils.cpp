@@ -31,6 +31,7 @@
 #include "base/ccMacros.h"
 #include "base/CCDirector.h"
 #include "platform/CCSAXParser.h"
+#include "base/ccUtils.h"
 
 #include "tinyxml2.h"
 #include "unzip.h"
@@ -261,7 +262,7 @@ public:
                 else if (sName == "integer")
                     _curArray->push_back(Value(atoi(_curValue.c_str())));
                 else
-                    _curArray->push_back(Value(atof(_curValue.c_str())));
+                    _curArray->push_back(Value(utils::atof(_curValue.c_str())));
             }
             else if (SAX_DICT == curState)
             {
@@ -270,7 +271,7 @@ public:
                 else if (sName == "integer")
                     (*_curDict)[_curKey] = Value(atoi(_curValue.c_str()));
                 else
-                    (*_curDict)[_curKey] = Value(atof(_curValue.c_str()));
+                    (*_curDict)[_curKey] = Value(utils::atof(_curValue.c_str()));
             }
             
             _curValue.clear();
@@ -769,13 +770,17 @@ void FileUtils::setSearchResolutionsOrder(const std::vector<std::string>& search
     }
 }
 
-void FileUtils::addSearchResolutionsOrder(const std::string &order)
+void FileUtils::addSearchResolutionsOrder(const std::string &order,const bool front)
 {
     std::string resOrder = order;
     if (!resOrder.empty() && resOrder[resOrder.length()-1] != '/')
         resOrder.append("/");
-    
-    _searchResolutionsOrderArray.push_back(resOrder);
+
+    if (front) {
+        _searchResolutionsOrderArray.insert(_searchResolutionsOrderArray.begin(), resOrder);
+    } else {
+        _searchResolutionsOrderArray.push_back(resOrder);
+    }
 }
 
 const std::vector<std::string>& FileUtils::getSearchResolutionsOrder()
@@ -822,7 +827,7 @@ void FileUtils::setSearchPaths(const std::vector<std::string>& searchPaths)
     }
 }
 
-void FileUtils::addSearchPath(const std::string &searchpath)
+void FileUtils::addSearchPath(const std::string &searchpath,const bool front)
 {
     std::string prefix;
     if (!isAbsolutePath(searchpath))
@@ -833,7 +838,11 @@ void FileUtils::addSearchPath(const std::string &searchpath)
     {
         path += "/";
     }
-    _searchPathArray.push_back(path);
+    if (front) {
+        _searchPathArray.insert(_searchPathArray.begin(), path);
+    } else {
+        _searchPathArray.push_back(path);
+    }
 }
 
 void FileUtils::setFilenameLookupDictionary(const ValueMap& filenameLookupDict)

@@ -1,6 +1,7 @@
 
 --------------------------------
 -- @module FileUtils
+-- @parent_module cc
 
 --------------------------------
 -- @function [parent=#FileUtils] fullPathForFilename 
@@ -86,11 +87,13 @@
 -- @function [parent=#FileUtils] addSearchResolutionsOrder 
 -- @param self
 -- @param #string str
+-- @param #bool bool
         
 --------------------------------
 -- @function [parent=#FileUtils] addSearchPath 
 -- @param self
 -- @param #string str
+-- @param #bool bool
         
 --------------------------------
 -- @function [parent=#FileUtils] isFileExist 
