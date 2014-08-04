@@ -230,6 +230,8 @@ void Downloader::prepareDownload(const std::string &srcUrl, const std::string &s
     pData->customId = customId;
     pData->url = srcUrl;
     pData->downloader = downloader;
+    pData->downloaded = 0;
+    pData->totalToDownload = 0;
     
     fDesc->fp = nullptr;
     fDesc->curl = nullptr;
@@ -304,10 +306,14 @@ void Downloader::downloadToBufferAsync(const std::string &srcUrl, unsigned char 
         pData.customId = customId;
         pData.url = srcUrl;
         pData.downloader = downloader;
+        pData.downloaded = 0;
+        pData.totalToDownload = 0;
         
         StreamData streamBuffer;
         streamBuffer.buffer = buffer;
         streamBuffer.total = size;
+        streamBuffer.offset = 0;
+        streamBuffer.total = 0;
         
         auto t = std::thread(&Downloader::downloadToBuffer, this, srcUrl, customId, streamBuffer, pData);
         t.detach();
@@ -323,10 +329,14 @@ void Downloader::downloadToBufferSync(const std::string &srcUrl, unsigned char *
         pData.customId = customId;
         pData.url = srcUrl;
         pData.downloader = downloader;
+        pData.downloaded = 0;
+        pData.totalToDownload = 0;
         
         StreamData streamBuffer;
         streamBuffer.buffer = buffer;
         streamBuffer.total = size;
+        streamBuffer.offset = 0;
+        streamBuffer.total = 0;
         
         downloadToBuffer(srcUrl, customId, streamBuffer, pData);
     }

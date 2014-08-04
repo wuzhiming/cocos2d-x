@@ -77,8 +77,8 @@ public:
         std::string url;
         std::string path;
         std::string name;
-        double downloaded = 0;
-        double totalToDownload = 0;
+        double downloaded;
+        double totalToDownload;
     };
 
     struct DownloadUnit
@@ -91,8 +91,8 @@ public:
     
     struct StreamData
     {
-        long offset = 0;
-        long total = 0;
+        long offset;
+        long total;
         unsigned char *buffer;
     };
     
