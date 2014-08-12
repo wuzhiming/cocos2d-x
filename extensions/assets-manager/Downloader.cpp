@@ -313,7 +313,6 @@ void Downloader::downloadToBufferAsync(const std::string &srcUrl, unsigned char 
         streamBuffer.buffer = buffer;
         streamBuffer.total = size;
         streamBuffer.offset = 0;
-        streamBuffer.total = 0;
         
         auto t = std::thread(&Downloader::downloadToBuffer, this, srcUrl, customId, streamBuffer, pData);
         t.detach();
@@ -336,7 +335,6 @@ void Downloader::downloadToBufferSync(const std::string &srcUrl, unsigned char *
         streamBuffer.buffer = buffer;
         streamBuffer.total = size;
         streamBuffer.offset = 0;
-        streamBuffer.total = 0;
         
         downloadToBuffer(srcUrl, customId, streamBuffer, pData);
     }
