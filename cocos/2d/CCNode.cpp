@@ -1664,10 +1664,11 @@ const Mat4& Node::getNodeToParentTransform() const
         // If skew is needed, apply skew and then anchor point
         if (needsSkewMatrix)
         {
-            Mat4 skewMatrix(1, (float)tanf(CC_DEGREES_TO_RADIANS(_skewY)), 0, 0,
-                              (float)tanf(CC_DEGREES_TO_RADIANS(_skewX)), 1, 0, 0,
-                              0,  0,  1, 0,
-                              0,  0,  0, 1);
+            const float mat4[16] = {1, (float)tanf(CC_DEGREES_TO_RADIANS(_skewY)), 0, 0,
+                (float)tanf(CC_DEGREES_TO_RADIANS(_skewX)), 1, 0, 0,
+                0,  0,  1, 0,
+                0,  0,  0, 1};
+            Mat4 skewMatrix(mat4);
 
             _transform = _transform * skewMatrix;
 
