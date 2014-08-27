@@ -991,6 +991,9 @@ void Layout::doLayout()
     {
         return;
     }
+    
+    sortAllChildren();
+    
     LayoutManager* executant = this->createLayoutManager();
     
     if (executant)
