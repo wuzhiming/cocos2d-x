@@ -1126,25 +1126,34 @@ bool FileUtils::removeFile(const std::string &path)
 bool FileUtils::renameFile(const std::string &path, const std::string &oldname, const std::string &name)
 {
     CCASSERT(!path.empty(), "Invalid path");
+    std::string oldPath = path + oldname;
+    std::string newPath = path + name;
     
     // Rename a file
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
-    std::string oldPath = path + oldname;
-    std::string newPath = path + name;
-    if (rename(oldPath.c_str(), newPath.c_str()) != 0)
+    if (0 != rename(oldPath.c_str(), newPath.c_str()))
     {
         CCLOGERROR("Fail to rename file %s to %s !", oldPath.c_str(), newPath.c_str());
         return false;
     }
     return true;
 #else
-    std::string command = "ren ";
-    // Path may include space.
-    command += "\"" + path + oldname + "\" \"" + name + "\"";
-	if (WinExec(command.c_str(), SW_HIDE) > 31)
+    std::regex pat("\/");
+    std::string _old = std::regex_replace(oldfile, pat, "\\");
+    std::string _new = std::regex_replace(newfile, pat, "\\");
+    
+    if(FileUtils::getInstance()->isFileExist(_new))
+    {
+        DeleteFileA(_new.c_str());
+    }
+    
+    MoveFileA(_old.c_str(), _new.c_str());
+    
+    if(0 == GetLastError())
         return true;
     else
         return false;
+
 #endif
 }
 
@@ -1165,7 +1174,7 @@ long FileUtils::getFileSize(const std::string &filepath)
     int result = stat( fullpath.c_str(), &info );
     
     // Check if statistics are valid:
-    if( result != 0 )
+    if( 0 != result )
     {
         // Failed
         return -1;
