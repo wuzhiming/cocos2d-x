@@ -366,7 +366,7 @@ void Downloader::downloadToBuffer(const std::string &srcUrl, const std::string &
     CURLcode res = curl_easy_perform(curl);
     if (res != CURLE_OK)
     {
-        AssetsManager::removeFile(data.path + data.name + TEMP_EXT);
+        _fileUtils->removeFile(data.path + data.name + TEMP_EXT);
         std::string msg = StringUtils::format("Unable to download file: [curl error]%s", curl_easy_strerror(res));
         this->notifyError(msg, customId, res);
     }
@@ -436,7 +436,7 @@ void Downloader::download(const std::string &srcUrl, const std::string &customId
     CURLcode res = curl_easy_perform(curl);
     if (res != CURLE_OK)
     {
-        AssetsManager::removeFile(data.path + data.name + TEMP_EXT);
+        _fileUtils->removeFile(data.path + data.name + TEMP_EXT);
         std::string msg = StringUtils::format("Unable to download file: [curl error]%s", curl_easy_strerror(res));
         this->notifyError(msg, customId, res);
     }
@@ -447,7 +447,7 @@ void Downloader::download(const std::string &srcUrl, const std::string &customId
     // This can only be done after fclose
     if (res == CURLE_OK)
     {
-        AssetsManager::renameFile(data.path, data.name + TEMP_EXT, data.name);
+        _fileUtils->renameFile(data.path, data.name + TEMP_EXT, data.name);
     }
     
     Director::getInstance()->getScheduler()->performFunctionInCocosThread([=]{
@@ -564,7 +564,7 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
             if (_supportResuming && unit.resumeDownload)
             {
                 // Check already downloaded size for current download unit
-                long size = AssetsManager::getFileSize(storagePath + TEMP_EXT);
+                long size = _fileUtils->getFileSize(storagePath + TEMP_EXT);
                 if (size != -1)
                 {
                     curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, size);
@@ -671,7 +671,7 @@ void Downloader::groupBatchDownload(const DownloadUnits &units)
         }
         else
         {
-            AssetsManager::renameFile(data->path, data->name + TEMP_EXT, data->name);
+            _fileUtils->renameFile(data->path, data->name + TEMP_EXT, data->name);
         }
     }
     

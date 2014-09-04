@@ -114,15 +114,7 @@ CC_CONSTRUCTOR_ACCESS:
     
 protected:
     
-    static bool createDirectory(const std::string &path);
-    
-    static bool removeDirectory(const std::string &path);
-    
-    static bool removeFile(const std::string &path);
-    
-    static bool renameFile(const std::string &path, const std::string &oldname, const std::string &name);
-    
-    static long getFileSize(const std::string &filepath);
+    std::string basename(const std::string& path) const;
     
     std::string get(const std::string& key) const;
     
