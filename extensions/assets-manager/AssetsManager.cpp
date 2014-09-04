@@ -106,7 +106,7 @@ AssetsManager::AssetsManager(const std::string& manifestUrl, const std::string& 
     _tempManifest = new Manifest();
     _tempManifest->parse(_tempManifestPath);
     if (!_tempManifest->isLoaded())
-        removeFile(_tempManifestPath);
+        _fileUtils->removeFile(_tempManifestPath);
 
     // Init remote manifest for future usage
     _remoteManifest = new Manifest();
@@ -156,7 +156,7 @@ void AssetsManager::loadLocalManifest(const std::string& manifestUrl)
         if (_localManifest->isLoaded())
             prepareLocalManifest();
         else
-            removeFile(_cacheManifestPath);
+            _fileUtils->removeFile(_cacheManifestPath);
     }
     
     // Fail to found or load cached manifest file
@@ -172,6 +172,20 @@ void AssetsManager::loadLocalManifest(const std::string& manifestUrl)
     {
         CCLOG("AssetsManager : No local manifest file found error.\n");
         dispatchUpdateEvent(EventAssetsManager::EventCode::ERROR_NO_LOCAL_MANIFEST);
+    }
+}
+
+std::string AssetsManager::basename(const std::string& path) const
+{
+    size_t found = path.find_last_of("/\\");
+    
+    if (std::string::npos != found)
+    {
+        return path.substr(0, found);
+    }
+    else
+    {
+        return path;
     }
 }
 
@@ -202,11 +216,11 @@ const std::string& AssetsManager::getStoragePath() const
 void AssetsManager::setStoragePath(const std::string& storagePath)
 {
     if (_storagePath.size() > 0)
-        removeDirectory(_storagePath);
+        _fileUtils->removeDirectory(_storagePath);
 
     _storagePath = storagePath;
     adjustPath(_storagePath);
-    createDirectory(_storagePath);
+    _fileUtils->createDirectories(_storagePath);
 }
 
 void AssetsManager::adjustPath(std::string &path)
@@ -214,160 +228,6 @@ void AssetsManager::adjustPath(std::string &path)
     if (path.size() > 0 && path[path.size() - 1] != '/')
     {
         path.append("/");
-    }
-}
-
-bool AssetsManager::createDirectory(const std::string& path)
-{
-    // Split the path
-    size_t start = 0;
-    size_t found = path.find_first_of("/\\", start);
-    std::string subpath;
-    std::vector<std::string> dirs;
-    while (found != std::string::npos)
-    {
-        subpath = path.substr(start, found - start + 1);
-        if (subpath.size() > 0) dirs.push_back(subpath);
-        start = found+1;
-        found = path.find_first_of("/\\", start);
-    }
-
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
-    DIR *dir = NULL;
-
-    // Create path recursively
-    subpath = "";
-    for (int i = 0; i < dirs.size(); ++i) {
-        subpath += dirs[i];
-        dir = opendir(subpath.c_str());
-        if (!dir)
-        {
-            int ret = mkdir(subpath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-            if (ret != 0 && (errno != EEXIST))
-            {
-                return false;
-            }
-        }
-    }
-    return true;
-#else
-    if ((GetFileAttributesA(path.c_str())) == INVALID_FILE_ATTRIBUTES)
-    {
-		subpath = "";
-		for(int i = 0 ; i < dirs.size() ; ++i)
-		{
-			subpath += dirs[i];
-			BOOL ret = CreateDirectoryA(subpath.c_str(), NULL);
-            if (!ret && ERROR_ALREADY_EXISTS != GetLastError())
-            {
-                return false;
-            }
-		}
-    }
-    return true;
-#endif
-}
-
-bool AssetsManager::removeDirectory(const std::string& path)
-{
-    if (path.size() > 0 && path[path.size() - 1] != '/')
-    {
-        CCLOGERROR("Fail to remove directory, invalid path: %s\n", path.c_str());
-        return false;
-    }
-
-    // Remove downloaded files
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
-    std::string command = "rm -r ";
-    // Path may include space.
-    command += "\"" + path + "\"";
-    if (system(command.c_str()) >= 0)
-        return true;
-    else
-        return false;
-#else
-    std::string command = "rd /s /q ";
-    // Path may include space.
-    command += "\"" + path + "\"";
-	if (WinExec(command.c_str(), SW_HIDE) > 31)
-        return true;
-    else
-        return false;
-#endif
-}
-
-bool AssetsManager::removeFile(const std::string &path)
-{
-    // Remove downloaded file
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
-    std::string command = "rm -f ";
-    // Path may include space.
-    command += "\"" + path + "\"";
-    if (system(command.c_str()) >= 0)
-        return true;
-    else
-        return false;
-#else
-    std::string command = "del /q ";
-    // Path may include space.
-    command += "\"" + path + "\"";
-	if (WinExec(command.c_str(), SW_HIDE) > 31)
-        return true;
-    else
-        return false;
-#endif
-}
-
-bool AssetsManager::renameFile(const std::string &path, const std::string &oldname, const std::string &name)
-{
-    // Rename a file
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32)
-    std::string oldPath = path + oldname;
-    std::string newPath = path + name;
-    if (rename(oldPath.c_str(), newPath.c_str()) != 0)
-    {
-        CCLOGERROR("Fail to rename file %s to %s !\n", oldPath.c_str(), newPath.c_str());
-        return false;
-    }
-    return true;
-#else
-    std::string oldfile = path + oldname;
-    std::string newfile = path + name;
-
-    
-    std::regex pat("\/");
-    std::string _old = std::regex_replace(oldfile, pat, "\\");
-    std::string _new = std::regex_replace(newfile, pat, "\\");
-
-    if(FileUtils::getInstance()->isFileExist(_new))
-    {
-        DeleteFileA(_new.c_str());
-    }
-    
-    MoveFileA(_old.c_str(), _new.c_str());
-
-    if(0 == GetLastError())
-        return true;
-    else
-        return false;
-#endif
-}
-
-long AssetsManager::getFileSize(const std::string &filepath)
-{
-    struct stat info;
-    // Get data associated with "crt_stat.c":
-    int result = stat( filepath.c_str(), &info );
-    
-    // Check if statistics are valid:
-    if( result != 0 )
-    {
-        // Failed
-        return -1;
-    }
-    else
-    {
-        return (long)(info.st_size);
     }
 }
 
@@ -429,7 +289,7 @@ bool AssetsManager::decompress(const std::string &zip)
         {
             //There are not directory entry in some case.
             //So we need to create directory when decompressing file entry
-            if ( !createDirectory(fullPath) )
+            if ( !_fileUtils->createDirectories(basename(fullPath)) )
             {
                 // Failed to create directory
                 CCLOG("AssetsManager : can not create directory %s\n", fullPath.c_str());
@@ -508,7 +368,7 @@ void AssetsManager::decompressDownloadedZip()
         {
             dispatchUpdateEvent(EventAssetsManager::EventCode::ERROR_DECOMPRESS, "", "Unable to decompress file " + zipfile);
         }
-        removeFile(zipfile);
+        _fileUtils->removeFile(zipfile);
     }
     _compressedFiles.clear();
 }
@@ -677,7 +537,7 @@ void AssetsManager::startUpdate()
         {
             _updateState = State::UP_TO_DATE;
             // Rename temporary manifest to valid manifest
-            renameFile(_storagePath, TEMP_MANIFEST_FILENAME, MANIFEST_FILENAME);
+            _fileUtils->renameFile(_storagePath, TEMP_MANIFEST_FILENAME, MANIFEST_FILENAME);
             dispatchUpdateEvent(EventAssetsManager::EventCode::ALREADY_UP_TO_DATE);
         }
         else
@@ -690,13 +550,13 @@ void AssetsManager::startUpdate()
 
                 if (diff.type == Manifest::DiffType::DELETED)
                 {
-                    removeFile(_storagePath + diff.asset.path);
+                    _fileUtils->removeFile(_storagePath + diff.asset.path);
                 }
                 else
                 {
                     std::string path = diff.asset.path;
                     // Create path
-                    createDirectory(_storagePath + path);
+                    _fileUtils->createDirectories(basename(_storagePath + path));
 
                     Downloader::DownloadUnit unit;
                     unit.customId = it->first;
@@ -733,7 +593,7 @@ void AssetsManager::updateSucceed()
 {
     // Every thing is correctly downloaded, do the following
     // 1. rename temporary manifest to valid manifest
-    renameFile(_storagePath, TEMP_MANIFEST_FILENAME, MANIFEST_FILENAME);
+    _fileUtils->renameFile(_storagePath, TEMP_MANIFEST_FILENAME, MANIFEST_FILENAME);
     // 2. swap the localManifest
     if (_localManifest != nullptr)
         _localManifest->release();
@@ -1021,8 +881,8 @@ void AssetsManager::onSuccess(const std::string &srcUrl, const std::string &stor
 
 void AssetsManager::destroyDownloadedVersion()
 {
-    removeFile(_cacheVersionPath);
-    removeFile(_cacheManifestPath);
+    _fileUtils->removeFile(_cacheVersionPath);
+    _fileUtils->removeFile(_cacheManifestPath);
 }
 
 NS_CC_EXT_END
