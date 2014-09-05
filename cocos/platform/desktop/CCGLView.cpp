@@ -648,6 +648,11 @@ void GLView::onGLFWKeyCallback(GLFWwindow *window, int key, int scancode, int ac
         auto dispatcher = Director::getInstance()->getEventDispatcher();
         dispatcher->dispatchEvent(&event);
     }
+
+    if (GLFW_RELEASE != action && g_keyCodeMap[key] == EventKeyboard::KeyCode::KEY_BACKSPACE)
+    {
+        IMEDispatcher::sharedDispatcher()->dispatchDeleteBackward();
+    }
 }
 
 void GLView::onGLFWCharCallback(GLFWwindow *window, unsigned int character)
