@@ -43,6 +43,10 @@
 #include <dirent.h>
 #endif
 
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
+#include <regex>
+#endif
+
 #if (CC_TARGET_PLATFORM != CC_PLATFORM_IOS) && (CC_TARGET_PLATFORM != CC_PLATFORM_MAC)
 
 NS_CC_BEGIN
@@ -1139,8 +1143,8 @@ bool FileUtils::renameFile(const std::string &path, const std::string &oldname, 
     return true;
 #else
     std::regex pat("\/");
-    std::string _old = std::regex_replace(oldfile, pat, "\\");
-    std::string _new = std::regex_replace(newfile, pat, "\\");
+    std::string _old = std::regex_replace(oldPath, pat, "\\");
+    std::string _new = std::regex_replace(newPath, pat, "\\");
     
     if(FileUtils::getInstance()->isFileExist(_new))
     {
@@ -1153,7 +1157,6 @@ bool FileUtils::renameFile(const std::string &path, const std::string &oldname, 
         return true;
     else
         return false;
-
 #endif
 }
 
