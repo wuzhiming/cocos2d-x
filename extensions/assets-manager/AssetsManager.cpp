@@ -28,17 +28,6 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <stdio.h>
-#include <sys/stat.h>
-
-#if (CC_TARGET_PLATFORM != CC_PLATFORM_WIN32) && (CC_TARGET_PLATFORM != CC_PLATFORM_WP8) && (CC_TARGET_PLATFORM != CC_PLATFORM_WINRT)
-#include <sys/types.h>
-#include <errno.h>
-#include <dirent.h>
-#endif
-
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32)
-#include <regex>
-#endif
 
 #include "unzip.h"
 
