@@ -411,8 +411,6 @@ void RenderTexture::visit(Renderer *renderer, const Mat4 &parentTransform, uint3
     draw(renderer, _modelViewTransform, flags);
     
     director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
-
-    _orderOfArrival = 0;
 }
 
 bool RenderTexture::saveToFile(const std::string& filename, bool isRGBA)

@@ -329,9 +329,6 @@ void ProtectedNode::visit(Renderer* renderer, const Mat4 &parentTransform, uint3
     for(auto it=_children.cbegin()+i; it != _children.cend(); ++it)
         (*it)->visit(renderer, _modelViewTransform, flags);
     
-    // reset for next frame
-    _orderOfArrival = 0;
-    
     director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
 }
 

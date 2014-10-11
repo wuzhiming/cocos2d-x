@@ -479,9 +479,6 @@ void Armature::visit(cocos2d::Renderer *renderer, const Mat4 &parentTransform, u
     sortAllChildren();
     draw(renderer, _modelViewTransform, flags);
 
-    // reset for next frame
-    _orderOfArrival = 0;
-
     director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
 }
 

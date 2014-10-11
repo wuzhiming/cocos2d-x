@@ -152,9 +152,6 @@ void NodeGrid::visit(Renderer *renderer, const Mat4 &parentTransform, uint32_t p
         this->draw(renderer, _modelViewTransform, dirty);
     }
     
-    // reset for next frame
-    _orderOfArrival = 0;
-    
     if(_nodeGrid && _nodeGrid->isActive())
     {
         // restore projection
