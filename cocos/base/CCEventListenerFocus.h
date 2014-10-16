@@ -54,7 +54,7 @@ public:
 CC_CONSTRUCTOR_ACCESS:
     EventListenerFocus();
     bool init();
-private:
+    
     friend class EventDispatcher;
 };
 
