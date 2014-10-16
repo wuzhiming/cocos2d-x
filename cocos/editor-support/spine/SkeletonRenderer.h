@@ -89,7 +89,7 @@ public:
 	virtual void setOpacityModifyRGB (bool value);
 	virtual bool isOpacityModifyRGB () const;
 
-protected:
+CC_CONSTRUCTOR_ACCESS:
 	SkeletonRenderer ();
 	SkeletonRenderer (spSkeletonData* skeletonData, bool ownsSkeletonData = false);
 	SkeletonRenderer (const std::string& skeletonDataFile, spAtlas* atlas, float scale = 1);
@@ -97,6 +97,7 @@ protected:
 	virtual ~SkeletonRenderer ();
 	void initialize ();
 
+protected:
 	void setSkeletonData (spSkeletonData* skeletonData, bool ownsSkeletonData);
 	virtual cocos2d::Texture2D* getTexture (spRegionAttachment* attachment) const;
 	virtual cocos2d::Texture2D* getTexture (spMeshAttachment* attachment) const;
