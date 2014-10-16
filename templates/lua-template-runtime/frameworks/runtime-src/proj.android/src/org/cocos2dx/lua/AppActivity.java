@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.ArrayList;
 
 import org.cocos2dx.lib.Cocos2dxActivity;
 
@@ -44,21 +45,18 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.Settings;
 import android.text.format.Formatter;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
-// The name of .so is specified in AndroidMenifest.xml. NativityActivity will load it automatically for you.
-// You can use "System.loadLibrary()" to load other .so files.
 
 public class AppActivity extends Cocos2dxActivity{
 
-	static String hostIPAdress="0.0.0.0";
+	static String hostIPAdress = "0.0.0.0";
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		
 		if(nativeIsLandScape()) {
@@ -72,11 +70,12 @@ public class AppActivity extends Cocos2dxActivity{
 		// Check the wifi is opened when the native is debug.
 		if(nativeIsDebug())
 		{
-			if(!isWifiConnected())
+			getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+			if(!isNetworkConnected())
 			{
 				AlertDialog.Builder builder=new AlertDialog.Builder(this);
 				builder.setTitle("Warning");
-				builder.setMessage("Open Wifi for debuging...");
+				builder.setMessage("Please open WIFI for debuging...");
 				builder.setPositiveButton("OK",new DialogInterface.OnClickListener() {
 					
 					@Override
@@ -86,17 +85,28 @@ public class AppActivity extends Cocos2dxActivity{
 						System.exit(0);
 					}
 				});
-				builder.setCancelable(false);
+
+				builder.setNegativeButton("Cancel", null);
+				builder.setCancelable(true);
 				builder.show();
 			}
 		}
 		hostIPAdress = getHostIpAddress();
 	}
-	 private boolean isWifiConnected() {  
+	private boolean isNetworkConnected() {
 	        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);  
 	        if (cm != null) {  
 	            NetworkInfo networkInfo = cm.getActiveNetworkInfo();  
-	            if (networkInfo != null && networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {  
+			ArrayList networkTypes = new ArrayList();
+			networkTypes.add(ConnectivityManager.TYPE_WIFI);
+			try {
+				networkTypes.add(ConnectivityManager.class.getDeclaredField("TYPE_ETHERNET").getInt(null));
+			} catch (NoSuchFieldException nsfe) {
+			}
+			catch (IllegalAccessException iae) {
+				throw new RuntimeException(iae);
+			}
+			if (networkInfo != null && networkTypes.contains(networkInfo.getType())) {
 	                return true;  
 	            }  
 	        }  
@@ -112,14 +122,6 @@ public class AppActivity extends Cocos2dxActivity{
 	
 	public static String getLocalIpAddress() {
 		return hostIPAdress;
-	}
-	
-	public static String getSDCardPath() {
-		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-			String strSDCardPathString = Environment.getExternalStorageDirectory().getPath();
-           return  strSDCardPathString;
-		}
-		return null;
 	}
 	
 	private static native boolean nativeIsLandScape();

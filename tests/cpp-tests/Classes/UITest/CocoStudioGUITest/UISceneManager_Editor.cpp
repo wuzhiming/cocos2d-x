@@ -36,19 +36,21 @@ static const char* s_testArray[] =
     "UILayoutTest_Gradient_Editor",
     "UILayoutTest_BackGroundImage_Editor",
     "UILayoutTest_BackGroundImage_Scale9_Editor",
+    /*
     "UILayoutTest_Layout_Linear_Vertical_Editor",
     "UILayoutTest_Layout_Linear_Horizontal_Editor",
     "UILayoutTest_Layout_Relative_Align_Parent_Editor",
     "UILayoutTest_Layout_Relative_Location_Editor",
     "UIListViewTest_Vertical_Editor",
     "UIListViewTest_Horizontal_Editor",
+     */
     "UIPageViewTest_Editor",
     "UIScrollViewTest_Vertical_Editor",
     "UIScrollViewTest_Horizontal_Editor",
     "UIScrollViewTest_Both_Editor",    
 };
 
-static UISceneManager_Editor* sharedInstance = NULL;
+static UISceneManager_Editor* sharedInstance = nullptr;
 
 UISceneManager_Editor::UISceneManager_Editor()
 {
@@ -62,9 +64,9 @@ UISceneManager_Editor::~UISceneManager_Editor()
 
 UISceneManager_Editor* UISceneManager_Editor::sharedUISceneManager_Editor()
 {
-    if (sharedInstance == NULL)
+    if (sharedInstance == nullptr)
     {
-        sharedInstance = new UISceneManager_Editor();
+        sharedInstance = new (std::nothrow) UISceneManager_Editor();
     }
     return sharedInstance;
 }
@@ -147,6 +149,7 @@ Scene* UISceneManager_Editor::currentUIScene()
         case kUILayoutTest_BackGroundImage_Scale9_Editor:
             return UILayoutTest_BackGroundImage_Scale9_Editor::sceneWithTitle(s_testArray[_currentUISceneId]);
             
+            /*
         case kUILayoutTest_Layout_Linear_Vertical_Editor:
             return UILayoutTest_Layout_Linear_Vertical_Editor::sceneWithTitle(s_testArray[_currentUISceneId]);
             
@@ -164,6 +167,7 @@ Scene* UISceneManager_Editor::currentUIScene()
             
         case kUIListViewTest_Horizontal_Editor:
             return UIListViewTest_Horizontal_Editor::sceneWithTitle(s_testArray[_currentUISceneId]);
+             */
             
         case kUIPageViewTest_Editor:
             return UIPageViewTest_Editor::sceneWithTitle(s_testArray[_currentUISceneId]);
@@ -181,5 +185,5 @@ Scene* UISceneManager_Editor::currentUIScene()
             break;
     }
     
-    return NULL;
+    return nullptr;
 }
