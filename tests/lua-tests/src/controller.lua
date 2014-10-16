@@ -2,14 +2,17 @@
 -- avoid memory leak
 collectgarbage("setpause", 100) 
 collectgarbage("setstepmul", 5000)
-	
 
 ----------------
 -- run
+cc.FileUtils:getInstance():addSearchPath("src")
+-- CC_USE_DEPRECATED_API = true
+require "cocos.init"
+
 local director = cc.Director:getInstance()
 local glView   = director:getOpenGLView()
 if nil == glView then
-    glView = cc.GLView:createWithRect("Lua Tests", cc.rect(0,0,900,640))
+    glView = cc.GLViewImpl:createWithRect("Lua Tests", cc.rect(0,0,900,640))
     director:setOpenGLView(glView)
 end
 
@@ -72,8 +75,7 @@ end
 addSearchPath("res/", screenSize.height)
 addSearchPath("", screenSize.height)
 
-
-require "src/mainMenu"
+require "mainMenu"
 
 local scene = cc.Scene:create()
 scene:addChild(CreateTestMenu())

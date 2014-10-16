@@ -900,7 +900,7 @@ void Issue870::onEnter()
     _emitter->retain();
 
     _index = 0;
-    schedule(schedule_selector(Issue870::updateQuads), 2.0f);
+    schedule(CC_SCHEDULE_SELECTOR(Issue870::updateQuads), 2.0f);
 }
 
 void Issue870::updateQuads(float dt)
@@ -1012,13 +1012,14 @@ Layer* createParticleLayer(int nIndex)
         case 46: return new Issue3990();
         case 47: return new ParticleAutoBatching();
         case 48: return new ParticleVisibleTest();
+        case 49: return new ParticleResetTotalParticles();
         default:
             break;
     }
 
     return nullptr;
 }
-#define MAX_LAYER    49
+#define MAX_LAYER    50
 
 
 Layer* nextParticleAction()
@@ -1179,7 +1180,7 @@ void ParticleDemo::restartCallback(Ref* sender)
 
 void ParticleDemo::nextCallback(Ref* sender)
 {
-    auto s = new ParticleTestScene();
+    auto s = new (std::nothrow) ParticleTestScene();
     s->addChild( nextParticleAction() );
     Director::getInstance()->replaceScene(s);
     s->release();
@@ -1187,7 +1188,7 @@ void ParticleDemo::nextCallback(Ref* sender)
 
 void ParticleDemo::backCallback(Ref* sender)
 {
-    auto s = new ParticleTestScene();
+    auto s = new (std::nothrow) ParticleTestScene();
     s->addChild( backParticleAction() );
     Director::getInstance()->replaceScene(s);
     s->release();
@@ -1220,7 +1221,7 @@ void ParticleBatchHybrid::onEnter()
 
     addChild(batch, 10);
 
-     schedule(schedule_selector(ParticleBatchHybrid::switchRender), 2.0f);
+     schedule(CC_SCHEDULE_SELECTOR(ParticleBatchHybrid::switchRender), 2.0f);
 
      auto node = Node::create();
      addChild(node);
@@ -1337,7 +1338,7 @@ void ParticleReorder::onEnter()
         addChild(parent, 10, 1000+i);
     }
 
-    schedule(schedule_selector(ParticleReorder::reorderParticles), 1.0f);
+    schedule(CC_SCHEDULE_SELECTOR(ParticleReorder::reorderParticles), 1.0f);
 }
 
 std::string ParticleReorder::title() const
@@ -1473,7 +1474,7 @@ void Issue1201::onEnter()
     removeChild(_background, true);
     _background = nullptr;
 
-    RainbowEffect *particle = new RainbowEffect();
+    RainbowEffect *particle = new (std::nothrow) RainbowEffect();
     particle->initWithTotalParticles(50);
 
     addChild(particle);
@@ -1635,7 +1636,7 @@ void AddAndDeleteParticleSystems::onEnter()
 
     }
 
-    schedule(schedule_selector(AddAndDeleteParticleSystems::removeSystem), 0.5f);
+    schedule(CC_SCHEDULE_SELECTOR(AddAndDeleteParticleSystems::removeSystem), 0.5f);
     _emitter = nullptr;
 
 }
@@ -1786,7 +1787,7 @@ void ReorderParticleSystems::onEnter()
 
     }
 
-    schedule(schedule_selector(ReorderParticleSystems::reorderSystem), 2.0f);
+    schedule(CC_SCHEDULE_SELECTOR(ReorderParticleSystems::reorderSystem), 2.0f);
     _emitter = nullptr;
 
 }
@@ -1882,7 +1883,7 @@ void PremultipliedAlphaTest::onEnter()
     this->addChild(_emitter, 10);
     _hasEmitter = true;
     
-    schedule(schedule_selector(PremultipliedAlphaTest::readdPaticle), 1.0f);
+    schedule(CC_SCHEDULE_SELECTOR(PremultipliedAlphaTest::readdPaticle), 1.0f);
 }
 
 // PremultipliedAlphaTest2
@@ -1954,7 +1955,7 @@ void ParticleVisibleTest::onEnter()
     
     _emitter->setTexture( Director::getInstance()->getTextureCache()->addImage(s_stars1) );
     
-    schedule(schedule_selector(ParticleVisibleTest::callback), 1);
+    schedule(CC_SCHEDULE_SELECTOR(ParticleVisibleTest::callback), 1);
     
     setEmitterPosition();
 }
@@ -2003,6 +2004,52 @@ std::string ParticleAutoBatching::title() const
 std::string ParticleAutoBatching::subtitle() const
 {
     return "All 10 particles should be drawin in one batch";
+}
+
+
+//
+// ParticleResetTotalParticles
+//
+void ParticleResetTotalParticles::onEnter()
+{
+    ParticleDemo::onEnter();
+    
+    _color->setColor(Color3B::BLACK);
+    removeChild(_background, true);
+    _background = nullptr;
+    
+    auto p = ParticleFire::createWithTotalParticles(10);
+    this->addChild(p);
+    
+    auto add = MenuItemFont::create("add 10 particles",
+                                    [p](Ref*)->void
+                                    {
+                                        p->setTotalParticles(p->getTotalParticles() + 10 );
+                                    });
+    add->setPosition(Vec2(0, 25));
+    auto remove = MenuItemFont::create("remove 10 particles",
+                                       [p](Ref*)->void
+                                       {
+                                           int count = p->getTotalParticles() - 10;
+                                           if (count < 0) { count = 0; }
+                                           p->setTotalParticles(count);
+                                       });
+    remove->setPosition(Vec2(0, -25));
+    
+    auto menu = Menu::create(add, remove, nullptr);
+    menu->setPosition(Vec2(VisibleRect::center()));
+    this->addChild(menu);
+    
+}
+
+std::string ParticleResetTotalParticles::title() const
+{
+    return "reset total particles";
+}
+
+std::string ParticleResetTotalParticles::subtitle() const
+{
+    return "it should work as well";
 }
 
 //

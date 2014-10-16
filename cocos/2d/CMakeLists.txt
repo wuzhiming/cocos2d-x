@@ -1,14 +1,9 @@
-if(WIN32)
-
-ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
-
-endif()
-
 include_directories(
-  ../external/ConvertUTF
+  ../external/ConvertUTF, .
 )
 
 set(COCOS_2D_SRC
+
   2d/CCActionCamera.cpp
   2d/CCActionCatmullRom.cpp
   2d/CCAction.cpp
@@ -26,6 +21,7 @@ set(COCOS_2D_SRC
   2d/CCAnimation.cpp
   2d/CCAtlasNode.cpp
   2d/CCClippingNode.cpp
+  2d/CCClippingRectangleNode.cpp
   2d/CCComponentContainer.cpp
   2d/CCComponent.cpp
   2d/CCDrawingPrimitives.cpp
@@ -58,6 +54,7 @@ set(COCOS_2D_SRC
   2d/CCParticleSystem.cpp
   2d/CCParticleSystemQuad.cpp
   2d/CCProgressTimer.cpp
+  2d/CCProtectedNode.cpp
   2d/CCRenderTexture.cpp
   2d/CCScene.cpp
   2d/CCSpriteBatchNode.cpp
@@ -74,5 +71,5 @@ set(COCOS_2D_SRC
   2d/CCTransitionPageTurn.cpp
   2d/CCTransitionProgress.cpp
   2d/CCTweenFunction.cpp
-)
 
+)

@@ -1,5 +1,4 @@
 LOCAL_PATH := $(call my-dir)
-
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := cocostudio_static
@@ -59,27 +58,31 @@ ActionTimeline/CCNodeReader.cpp \
 ActionTimeline/CCActionTimelineCache.cpp \
 ActionTimeline/CCFrame.cpp \
 ActionTimeline/CCTimeLine.cpp \
-ActionTimeline/CCActionTimeline.cpp
+ActionTimeline/CCActionTimeline.cpp \
+ActionTimeline/CSLoader.cpp \
+CSParseBinary.pb.cc 
+
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/.. \
 $(LOCAL_PATH)/../../../external
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../.. \
 $(LOCAL_PATH)/../../../external \
+$(LOCAL_PATH)/../../../external/protobuf-lite/src/google/protobuf \
+$(LOCAL_PATH)/../../../external/protobuf-lite/src \
 $(LOCAL_PATH)/.. \
 $(LOCAL_PATH)/../.. \
-$(LOCAL_PATH)/WidgetReader
+$(LOCAL_PATH)/WidgetReader \
+$(LOCAL_PATH)/../../platform/android \
+$(LOCAL_PATH)/../../../external/tinyxml2 \
 
 LOCAL_CFLAGS += -fexceptions
 
-
-LOCAL_WHOLE_STATIC_LIBRARIES := cocos2dx_static
-LOCAL_WHOLE_STATIC_LIBRARIES += cocosdenshion_static
-LOCAL_WHOLE_STATIC_LIBRARIES += cocos_ui_static
+LOCAL_STATIC_LIBRARIES := cocos_ui_static
+LOCAL_STATIC_LIBRARIES += cocosdenshion_static
+LOCAL_STATIC_LIBRARIES += cocos_extension_static
+LOCAL_STATIC_LIBRARIES += cocos2dx_internal_static
+LOCAL_STATIC_LIBRARIES += cocos_protobuf-lite_static
 
 include $(BUILD_STATIC_LIBRARY)
-
-$(call import-module,.)
-$(call import-module,audio/android)
-$(call import-module,ui)
 

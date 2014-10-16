@@ -20,16 +20,16 @@ Layer *CreateAnimationLayer(int index)
     switch(index)
     {
     case TEST_ANIMATIONELEMENT:
-        pLayer = new TestActionTimeline();
+        pLayer = new (std::nothrow) TestActionTimeline();
         break;
     case TEST_CHANGE_PLAY_SECTION:
-        pLayer = new TestChangePlaySection();
+        pLayer = new (std::nothrow) TestChangePlaySection();
         break;
     case TEST_TIMELINE_FRAME_EVENT:
-        pLayer = new TestTimelineFrameEvent();
+        pLayer = new (std::nothrow) TestTimelineFrameEvent();
         break;
     case TEST_TIMELINE_PERFORMACE:
-        pLayer = new TestTimelinePerformance();
+        pLayer = new (std::nothrow) TestTimelinePerformance();
         break;
     default:
         break;
@@ -123,7 +123,7 @@ void ActionTimelineTestLayer::onEnter()
         auto l = Label::createWithSystemFont(strSubtitle.c_str(), "Arial", 18);
         l->setColor(Color3B(0, 0, 0));
         addChild(l, 1, 10001);
-        l->setPosition( Point(VisibleRect::center().x, VisibleRect::top().y - 60) );
+        l->setPosition(VisibleRect::center().x, VisibleRect::top().y - 60);
     }
 
     // add menu
@@ -134,9 +134,9 @@ void ActionTimelineTestLayer::onEnter()
     Menu *menu = Menu::create(backItem, restartItem, nextItem, nullptr);
 
     menu->setPosition(Point::ZERO);
-    backItem->setPosition(Point(VisibleRect::center().x - restartItem->getContentSize().width * 2, VisibleRect::bottom().y + restartItem->getContentSize().height / 2));
-    restartItem->setPosition(Point(VisibleRect::center().x, VisibleRect::bottom().y + restartItem->getContentSize().height / 2));
-    nextItem->setPosition(Point(VisibleRect::center().x + restartItem->getContentSize().width * 2, VisibleRect::bottom().y + restartItem->getContentSize().height / 2));
+    backItem->setPosition(VisibleRect::center().x - restartItem->getContentSize().width * 2, VisibleRect::bottom().y + restartItem->getContentSize().height / 2);
+    restartItem->setPosition(VisibleRect::center().x, VisibleRect::bottom().y + restartItem->getContentSize().height / 2);
+    nextItem->setPosition(VisibleRect::center().x + restartItem->getContentSize().width * 2, VisibleRect::bottom().y + restartItem->getContentSize().height / 2);
 
     addChild(menu, 100);
 
@@ -150,7 +150,7 @@ void ActionTimelineTestLayer::onExit()
     backItem = restartItem = nextItem = nullptr;
 
     ActionTimelineCache::getInstance()->purge();
-    NodeReader::getInstance()->purge();
+    CSLoader::getInstance()->purge();
 
     Layer::onExit();
 }
@@ -166,7 +166,7 @@ std::string ActionTimelineTestLayer::subtitle() const
 
 void ActionTimelineTestLayer::restartCallback(Ref *pSender)
 {
-    Scene *s = new ActionTimelineTestScene();
+    Scene *s = new (std::nothrow) ActionTimelineTestScene();
     s->addChild( RestartAnimationTest() );
     Director::getInstance()->replaceScene(s);
     s->release();
@@ -174,14 +174,14 @@ void ActionTimelineTestLayer::restartCallback(Ref *pSender)
 
 void ActionTimelineTestLayer::nextCallback(Ref *pSender)
 {
-    Scene *s = new ActionTimelineTestScene();
+    Scene *s = new (std::nothrow) ActionTimelineTestScene();
     s->addChild( NextAnimationTest() );
     Director::getInstance()->replaceScene(s);
     s->release();
 }
 void ActionTimelineTestLayer::backCallback(Ref *pSender)
 {
-    Scene *s = new ActionTimelineTestScene();
+    Scene *s = new (std::nothrow) ActionTimelineTestScene();
     s->addChild( BackAnimationTest() );
     Director::getInstance()->replaceScene(s);
     s->release();
@@ -196,8 +196,8 @@ void TestActionTimeline::onEnter()
 
     SpriteFrameCache::getInstance()->addSpriteFramesWithFile("armature/Cowboy0.plist", "armature/Cowboy0.png");
 
-    Node* node = NodeReader::getInstance()->createNode("ActionTimeline/boy_1.ExportJson");
-    ActionTimeline* action = ActionTimelineCache::getInstance()->createAction("ActionTimeline/boy_1.ExportJson");
+    Node* node = CSLoader::createNode("ActionTimeline/boy_1.csb");
+    ActionTimeline* action = CSLoader::createTimeline("ActionTimeline/boy_1.csb");
 
     node->runAction(action);
     action->gotoFrameAndPlay(0, 60, true);
@@ -222,8 +222,8 @@ void TestChangePlaySection::onEnter()
 
     SpriteFrameCache::getInstance()->addSpriteFramesWithFile("armature/Cowboy0.plist", "armature/Cowboy0.png");
 
-    Node* node = NodeReader::getInstance()->createNode("ActionTimeline/boy_1.ExportJson");
-    action = ActionTimelineCache::getInstance()->createAction("ActionTimeline/boy_1.ExportJson");
+    Node* node = CSLoader::createNode("ActionTimeline/boy_1.csb");
+    action = CSLoader::createTimeline("ActionTimeline/boy_1.csb");
 
     node->runAction(action);
     action->gotoFrameAndPlay(70, action->getDuration(), true);
@@ -260,8 +260,8 @@ void TestTimelineFrameEvent::onEnter()
 
     SpriteFrameCache::getInstance()->addSpriteFramesWithFile("armature/Cowboy0.plist", "armature/Cowboy0.png");
 
-    Node* node = NodeReader::getInstance()->createNode("ActionTimeline/boy_1.ExportJson");
-    ActionTimeline* action = ActionTimelineCache::getInstance()->createAction("ActionTimeline/boy_1.ExportJson");
+    Node* node = CSLoader::createNode("ActionTimeline/boy_1.csb");
+    ActionTimeline* action = CSLoader::createTimeline("ActionTimeline/boy_1.csb");
 
     node->runAction(action);
     action->gotoFrameAndPlay(0, 60, true);
@@ -306,8 +306,8 @@ void TestTimelinePerformance::onEnter()
 
     for (int i = 0; i< 100; i++)
     {
-        Node* node = NodeReader::getInstance()->createNode("ActionTimeline/boy_1.ExportJson");
-        ActionTimeline* action = ActionTimelineCache::getInstance()->createAction("ActionTimeline/boy_1.ExportJson");
+        Node* node = CSLoader::createNode("ActionTimeline/boy_1.csb");
+        ActionTimeline* action = CSLoader::createTimeline("ActionTimeline/boy_1.csb");
 
         node->runAction(action);
         action->gotoFrameAndPlay(70, action->getDuration(), true);

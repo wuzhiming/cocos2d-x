@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 #include "ui/UIHelper.h"
 #include "ui/UIWidget.h"
+#include "ui/UILayoutComponent.h"
 
 NS_CC_BEGIN
 
@@ -108,7 +109,75 @@ Widget* Helper::seekActionWidgetByActionTag(Widget* root, int tag)
 	}
 	return nullptr;
 }
+    
+std::string Helper::getSubStringOfUTF8String(const std::string& str, std::string::size_type start, std::string::size_type length)
+{
+    if (length==0)
+    {
+        return "";
+    }
+    std::string::size_type c, i, ix, q, min=std::string::npos, max=std::string::npos;
+    for (q=0, i=0, ix=str.length(); i < ix; i++, q++)
+    {
+        if (q==start)
+        {
+            min = i;
+        }
+        if (q <= start+length || length==std::string::npos)
+        {
+            max = i;
+        }
+        
+        c = (unsigned char) str[i];
+        
+        if      (c<=127) i+=0;
+        else if ((c & 0xE0) == 0xC0) i+=1;
+        else if ((c & 0xF0) == 0xE0) i+=2;
+        else if ((c & 0xF8) == 0xF0) i+=3;
+        else return "";//invalid utf8
+    }
+    if (q <= start+length || length == std::string::npos)
+    {
+        max = i;
+    }
+    if (min==std::string::npos || max==std::string::npos)
+    {
+        return "";
+    }
+    return str.substr(min,max);
+}
 
+        void Helper::doLayout(cocos2d::Node *rootNode)
+        {
+            for(auto& node : rootNode->getChildren())
+            {
+                auto com = node->getComponent(__LAYOUT_COMPONENT_NAME);
+                Node *parent = node->getParent();
+                if (nullptr != com && nullptr != parent) {
+                    LayoutComponent* layoutComponent = (LayoutComponent*)com;
+
+                    if (layoutComponent->isUsingPercentPosition())
+                    {
+                        layoutComponent->RefreshLayoutPosition(LayoutComponent::PositionType::PreRelativePosition,layoutComponent->getPercentPosition());
+                    }
+                    else if (layoutComponent->getReferencePoint() != LayoutComponent::ReferencePoint::BOTTOM_LEFT)
+                    {
+                        layoutComponent->RefreshLayoutPosition(LayoutComponent::PositionType::RelativePosition,layoutComponent->getRelativePosition());
+                    }
+
+                    if (layoutComponent->isUsingPercentContentSize())
+                    {
+                        layoutComponent->RefreshLayoutSize(LayoutComponent::SizeType::PreSize,layoutComponent->getPercentContentSize());
+                    }
+
+                    Widget* uiWidget = dynamic_cast<Widget*>(node);
+                    if ( nullptr == uiWidget )
+                    {
+                        doLayout(node);
+                    }
+                }
+            }
+        }
 }
 
 NS_CC_END
