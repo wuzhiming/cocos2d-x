@@ -39,10 +39,13 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
     // create the application instance
     AppDelegate app;
-
     int ret = Application::getInstance()->run();
 
 #ifdef USE_WIN32_CONSOLE
+    if (!ret)
+    {
+        system("pause");
+    }
     FreeConsole();
 #endif
 
