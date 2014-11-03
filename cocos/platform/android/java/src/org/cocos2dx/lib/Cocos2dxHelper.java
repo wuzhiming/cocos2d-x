@@ -40,7 +40,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager.OnActivityResultListener;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
 
 public class Cocos2dxHelper {
@@ -76,7 +78,7 @@ public class Cocos2dxHelper {
     }
 
     private static boolean sInited = false;
-    public static void init(final Activity activity) {
+    public static void init(final Activity activity,ClassLoader loader) {
         if (!sInited) {
             final ApplicationInfo applicationInfo = activity.getApplicationInfo();
             
@@ -90,7 +92,7 @@ public class Cocos2dxHelper {
             Cocos2dxHelper.sCocos2dMusic = new Cocos2dxMusic(activity);
             Cocos2dxHelper.sCocos2dSound = new Cocos2dxSound(activity);
             Cocos2dxHelper.sAssetManager = activity.getAssets();
-            Cocos2dxHelper.nativeSetContext((Context)activity, Cocos2dxHelper.sAssetManager);
+            Cocos2dxHelper.nativeSetContext(loader, Cocos2dxHelper.sAssetManager);
     
             Cocos2dxBitmap.setContext(activity);
             sActivity = activity;
@@ -99,7 +101,29 @@ public class Cocos2dxHelper {
 
         }
     }
+    public static void init(final Activity activity,View view,ClassLoader loader) {
+        if (!sInited) {
+            final ApplicationInfo applicationInfo = activity.getApplicationInfo();
+            
+            Cocos2dxHelper.sCocos2dxHelperListener = (Cocos2dxHelperListener)view;
+                    
+            Cocos2dxHelper.sPackageName = applicationInfo.packageName;
+            Cocos2dxHelper.sFileDirectory = activity.getFilesDir().getAbsolutePath();
+            Log.e("helper", Cocos2dxHelper.sFileDirectory);
+            Cocos2dxHelper.nativeSetApkPath(applicationInfo.sourceDir);
+            Cocos2dxHelper.sCocos2dxAccelerometer = new Cocos2dxAccelerometer(activity);
+            Cocos2dxHelper.sCocos2dMusic = new Cocos2dxMusic(activity);
+            Cocos2dxHelper.sCocos2dSound = new Cocos2dxSound(activity);
+            Cocos2dxHelper.sAssetManager = activity.getAssets();
+            Cocos2dxHelper.nativeSetContext(loader, Cocos2dxHelper.sAssetManager);
     
+            Cocos2dxBitmap.setContext(activity);
+            sActivity = activity;
+
+            sInited = true;
+
+        }
+    }
     public static Activity getActivity() {
         return sActivity;
     }
@@ -132,7 +156,7 @@ public class Cocos2dxHelper {
 
     private static native void nativeSetEditTextDialogResult(final byte[] pBytes);
 
-    private static native void nativeSetContext(final Context pContext, final AssetManager pAssetManager);
+    private static native void nativeSetContext(ClassLoader loader, final AssetManager pAssetManager);
 
     public static String getCocos2dxPackageName() {
         return Cocos2dxHelper.sPackageName;

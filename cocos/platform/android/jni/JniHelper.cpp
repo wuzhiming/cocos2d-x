@@ -120,17 +120,16 @@ namespace cocos2d {
         return _env;
     }
 
-    bool JniHelper::setClassLoaderFrom(jobject activityinstance) {
-        JniMethodInfo _getclassloaderMethod;
-        if (!JniHelper::getMethodInfo_DefaultClassLoader(_getclassloaderMethod,
-                                                         "android/content/Context",
-                                                         "getClassLoader",
-                                                         "()Ljava/lang/ClassLoader;")) {
-            return false;
-        }
+    bool JniHelper::setClassLoaderFrom(jobject classloader) {
+//        JniMethodInfo _getclassloaderMethod;
+//        if (!JniHelper::getMethodInfo_DefaultClassLoader(_getclassloaderMethod,
+//                                                         "android/content/Context",
+//                                                         "getClassLoader",
+//                                                         "()Ljava/lang/ClassLoader;")) {
+//            return false;
+//        }
 
-        jobject _c = cocos2d::JniHelper::getEnv()->CallObjectMethod(activityinstance,
-                                                                    _getclassloaderMethod.methodID);
+        jobject _c = classloader;
 
         if (nullptr == _c) {
             return false;
