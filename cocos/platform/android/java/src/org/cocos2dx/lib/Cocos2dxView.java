@@ -1,8 +1,17 @@
 package org.cocos2dx.lib;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 import org.cocos2dx.lib.Cocos2dxHelper.Cocos2dxHelperListener;
@@ -80,62 +89,53 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 		
 	}
 	
-	protected void onLoadNativeLibraries() {
-        try {
-        	Log.e("cocos", "load start--------------");
-//            ApplicationInfo ai = m_ctx.getPackageManager().getApplicationInfo(m_ctx.getPackageName(), PackageManager.GET_META_DATA);
-//            Bundle bundle = ai.metaData;
-//            String libName = bundle.getString("android.app.lib_name");
-            System.loadLibrary("cocos2djs");
-            
-//            
-//            String fileName = "libcocos2djs.so";
-//            FileInputStream fis = new FileInputStream("/sdcard/gameEngine/libcocos2djs.so");
-//            File dir = m_ctx.getDir("gameEngine", Activity.MODE_PRIVATE);
-//            File nf = new File(dir.getAbsolutePath() + File.separator + fileName);
-//            
-//            FileOutputStream fos = new FileOutputStream(nf);
-//            byte[] buf = new byte[2048];
-//            int n;
-//            while ((n = fis.read(buf)) > 0)
-//                fos.write(buf, 0, n);
-//            fis.close();
-//            fos.close();
-//            
-//            System.load(dir.getAbsolutePath() + File.separator + fileName); 
-//            
-//            Log.e("cocos", "path is "+dir.getAbsolutePath()+"load over--------------");
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 	 private static native int[] getGLContextAttrs();
 	 protected void onLoadNativeLibrariesFromSdCard() {
-         try {
-              Log.e("cocos", "load start--------------");
-              String fileName = "libcocos2djs.so";
-            FileInputStream fis = new FileInputStream("/sdcard/gameEngine/libcocos2djs.so");
-            File dir = m_ctx.getDir("gameEngine", Activity.MODE_PRIVATE);
-            File nf = new File(dir.getAbsolutePath() + File.separator + fileName);
-            if (nf.exists())
-            {
-                 nf.delete();
-            }
-            FileOutputStream fos = new FileOutputStream(nf);
-            byte[] buf = new byte[2048];
-            int n;
-            while ((n = fis.read(buf)) > 0)
-                fos.write(buf, 0, n);
-            fis.close();
-            fos.close();
-            Log.e("cocos", "load over--------------");
-            
-            System.load(dir.getAbsolutePath() + File.separator + fileName); 
-         }catch (Exception e) {
-           e.printStackTrace();
-       }
-    }
+			try {
+				Log.e("cocos", "load start--------------");
+				String fileName = "libcocos2djs.so";
+		        File fis = new File("/sdcard/gameEngine/libcocos2djs.zip");
+		        File dir = m_ctx.getDir("gameEngine", Activity.MODE_PRIVATE);
+		        
+		        File nf = new File(dir.getAbsolutePath() + File.separator + fileName);
+		        if (nf.exists())
+		        {
+		        	nf.delete();
+		        }
+		        upZipFile(fis, dir.getAbsolutePath());
+		        
+		        System.load(dir.getAbsolutePath() + File.separator + fileName); 
+			}catch (Exception e) {
+	            e.printStackTrace();
+	        }
+		}
+		
+		/**
+		    * 解压缩功能.
+		    * 将zipFile文件解压到folderPath目录下.
+		    * @throws Exception
+		*/
+	    public int upZipFile(File zipFile, String folderPath)throws ZipException,IOException {
+	    //public static void upZipFile() throws Exception{
+	        ZipFile zfile=new ZipFile(zipFile);
+	        Enumeration zList=zfile.entries();
+	        ZipEntry ze=null;
+	        byte[] buf=new byte[10240];
+	        while(zList.hasMoreElements()){
+	            ze=(ZipEntry)zList.nextElement();    
+	            Log.d("upZipFile", "ze.getName() = "+ze.getName());
+	            OutputStream os=new BufferedOutputStream(new FileOutputStream(folderPath + File.separator + ze.getName()));
+	            InputStream is=new BufferedInputStream(zfile.getInputStream(ze));
+	            int readLen=0;
+	            while ((readLen=is.read(buf, 0, 10240))!=-1) {
+	                os.write(buf, 0, readLen);
+	            }
+	            is.close();
+	            os.close();    
+	        }
+	        zfile.close();
+	        return 0;
+	    }
 	 @Override
 	    public void showDialog(final String pTitle, final String pMessage) {
 	        Message msg = new Message();
@@ -165,6 +165,9 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	    public void viewOnPause(){
 	        Cocos2dxHelper.onPause();
 	        this.onPause();
+	    }
+	    public void viewOnDestory(){
+	    	
 	    }
 	    
 	    private final static boolean isAndroidEmulator() {
