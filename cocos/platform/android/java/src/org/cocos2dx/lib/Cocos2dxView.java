@@ -102,6 +102,9 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	 private static native int[] getGLContextAttrs();
 	 protected void onLoadNativeLibrariesFromSdCard() {
 		try {
+			
+			System.gc(); // avoid last classloader is not release, and current load same so file
+			
 			Log.e("cocos", "load start--------------");
 			String fileName = "libcocos2djs.so";
 	        File fis = new File("/sdcard/gameEngine/libcocos2djs.zip");
@@ -110,10 +113,9 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	        File nf = new File(dir.getAbsolutePath() + File.separator + fileName);
 	        if (nf.exists())
 	        {
-	        	nf.delete();
+	        	nf.deleteOnExit();
 	        }
 	        upZipFile(fis, dir.getAbsolutePath());
-	        
 	        System.load(dir.getAbsolutePath() + File.separator + fileName); 
 		}catch (Exception e) {
             e.printStackTrace();
