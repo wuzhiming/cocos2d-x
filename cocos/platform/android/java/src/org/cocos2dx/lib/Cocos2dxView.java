@@ -3,7 +3,6 @@ package org.cocos2dx.lib;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,16 +12,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-import org.cocos2dx.lib.Cocos2dxGLSurfaceView;
 import org.cocos2dx.lib.Cocos2dxHelper.Cocos2dxHelperListener;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Message;
 import android.preference.PreferenceManager.OnActivityResultListener;
 import android.util.Log;
@@ -46,8 +41,8 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	
 	private void viewOnCreate(){
 		Log.e("cocos", "in viewOnCreate");
-		onLoadNativeLibrariesFromSdCard();
-		
+		//onLoadNativeLibrariesFromSdCard("/sdcard/gameEnginePlay/libcocos2djs.zip");
+		onLoadNativeLibraryFromJar("/mnt/sdcard/gameEnginePlay/cocosPlay.jar");
 		Activity curAct = (Activity)m_ctx;
 		Log.e("cocos", "Cocos2dxHelper init start");
 		Cocos2dxHelper.init(curAct,this,this.getClass().getClassLoader());
@@ -103,14 +98,36 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	}
 	
 	 private static native int[] getGLContextAttrs();
-	 protected void onLoadNativeLibrariesFromSdCard() {
+	 
+	 protected void onLoadNativeLibraryFromJar(String jarFilePath) {
+		 try {
+		    ZipFile zf = new ZipFile(jarFilePath);
+		    ZipEntry zipEntry = zf.getEntry("libs/armeabi/libcocos2djs.so");
+		    // libhellojni.so is put in the lib folder
+		    InputStream in = zf.getInputStream(zipEntry);
+		    File f = File.createTempFile("JNI-", "Temp");
+		    FileOutputStream out = new FileOutputStream(f);
+		    byte [] buf = new byte[10240];
+		    int len;
+		    while ((len = in.read(buf, 0, 10240)) != -1)
+		      out.write(buf, 0, len);
+		    in.close();
+		    out.close();
+		    System.load(f.getAbsolutePath());
+		    f.delete();
+		  } catch (Exception e) {
+		    e.printStackTrace();
+		  }
+	 }
+	 
+	 protected void onLoadNativeLibrariesFromSdCard(String zipFilePath) {
 		try {
 			
 			System.gc(); // avoid last classloader is not release, and current load same so file
 			
 			Log.e("cocos", "load start--------------");
 			String fileName = "libcocos2djs.so";
-	        File fis = new File("/sdcard/gameEnginePlay/libcocos2djs.zip");
+	        File fis = new File(zipFilePath);
 	        File dir = m_ctx.getDir("gameEngine", Activity.MODE_PRIVATE);
 	        
 	        File nf = new File(dir.getAbsolutePath() + File.separator + fileName);
