@@ -43,6 +43,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 		CocosViewWrapper.setContext(m_ctx);
 		viewOnCreate();	
 	}
+	
 	private void viewOnCreate(){
 		Log.e("cocos", "in viewOnCreate");
 		onLoadNativeLibrariesFromSdCard();
@@ -50,6 +51,8 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 		Activity curAct = (Activity)m_ctx;
 		Log.e("cocos", "Cocos2dxHelper init start");
 		Cocos2dxHelper.init(curAct,this,this.getClass().getClassLoader());
+		Cocos2dxHelper.setSearchPath("/mnt/sdcard/gameEngine");
+		
 		Log.e("cocos", "Cocos2dxHelper init over");
         this.glContextAttrs = getGLContextAttrs();
 
@@ -181,6 +184,8 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
     public void viewOnDestory(){
     	
     }
+    
+    
     
     private final static boolean isAndroidEmulator() {
         String model = Build.MODEL;

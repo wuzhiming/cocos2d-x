@@ -390,3 +390,17 @@ void setStringForKeyJNI(const char* key, const char* value)
         t.env->DeleteLocalRef(stringArg2);
     }
 }
+
+std::string getDynamicSearchPath()
+{
+    JniMethodInfo t;
+    std::string ret("");
+    if (JniHelper::getStaticMethodInfo(t, CLASS_NAME, "getSearchPath", "()Ljava/lang/String;")) {
+        jstring stringArg1 = t.env->NewStringUTF(key);
+        jstring stringArg2 = t.env->NewStringUTF(value);
+        jstring str = t.env->CallStaticVoidMethod(t.classID, t.methodID);
+        t.env->DeleteLocalRef(str);
+        ret = JniHelper::jstring2string(str);
+        return ret;
+    }
+}
