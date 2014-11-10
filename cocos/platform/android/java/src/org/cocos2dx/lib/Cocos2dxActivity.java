@@ -99,6 +99,7 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         onLoadNativeLibraries();
 
         sContext = this;
+        CocosViewWrapper.setContext(sContext);
         this.mHandler = new Cocos2dxHandler(this);
         
         Cocos2dxHelper.init(this,this.getClassLoader());

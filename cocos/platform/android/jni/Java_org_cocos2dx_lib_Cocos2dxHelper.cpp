@@ -52,6 +52,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL Java_org_cocos2dx_lib_Cocos2dxHelper_nativeSetContext(JNIEnv*  env, jobject thiz, jobject classLoader, jobject assetManager) {
+            
             JniHelper::setClassLoaderFrom(classLoader);
             FileUtilsAndroid::setassetmanager(AAssetManager_fromJava(env, assetManager));
         }
@@ -392,15 +393,14 @@ void setStringForKeyJNI(const char* key, const char* value)
 }
 
 std::string getDynamicSearchPath()
-{
+{   
     JniMethodInfo t;
     std::string ret("");
     if (JniHelper::getStaticMethodInfo(t, CLASS_NAME, "getSearchPath", "()Ljava/lang/String;")) {
-        jstring stringArg1 = t.env->NewStringUTF(key);
-        jstring stringArg2 = t.env->NewStringUTF(value);
-        jstring str = t.env->CallStaticVoidMethod(t.classID, t.methodID);
-        t.env->DeleteLocalRef(str);
+        jstring str = (jstring)t.env->CallStaticObjectMethod(t.classID, t.methodID);
         ret = JniHelper::jstring2string(str);
+        t.env->DeleteLocalRef(str);
+        LOGD("getDynamicSearchPath:%s", ret.c_str());        
         return ret;
     }
 }

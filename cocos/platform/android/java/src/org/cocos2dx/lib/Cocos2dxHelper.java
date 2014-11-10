@@ -131,7 +131,7 @@ public class Cocos2dxHelper {
     
     public static void setSearchPath(String tempPath)
     {
-    	searchPath = searchPath;
+    	searchPath = tempPath;
     }
     
     public static String getSearchPath()

@@ -51,7 +51,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 		Activity curAct = (Activity)m_ctx;
 		Log.e("cocos", "Cocos2dxHelper init start");
 		Cocos2dxHelper.init(curAct,this,this.getClass().getClassLoader());
-		Cocos2dxHelper.setSearchPath("/mnt/sdcard/gameEngine");
+		Cocos2dxHelper.setSearchPath("/mnt/sdcard/gameEnginePlay");
 		
 		Log.e("cocos", "Cocos2dxHelper init over");
         this.glContextAttrs = getGLContextAttrs();
@@ -110,7 +110,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 			
 			Log.e("cocos", "load start--------------");
 			String fileName = "libcocos2djs.so";
-	        File fis = new File("/sdcard/gameEngine/libcocos2djs.zip");
+	        File fis = new File("/sdcard/gameEnginePlay/libcocos2djs.zip");
 	        File dir = m_ctx.getDir("gameEngine", Activity.MODE_PRIVATE);
 	        
 	        File nf = new File(dir.getAbsolutePath() + File.separator + fileName);

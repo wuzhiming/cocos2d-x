@@ -52,5 +52,5 @@ extern void setIntegerForKeyJNI(const char* key, int value);
 extern void setFloatForKeyJNI(const char* key, float value);
 extern void setDoubleForKeyJNI(const char* key, double value);
 extern void setStringForKeyJNI(const char* key, const char* value);
-
+extern std::string getDynamicSearchPath();
 #endif /* __Java_org_cocos2dx_lib_Cocos2dxHelper_H__ */
