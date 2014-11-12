@@ -102,7 +102,7 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        onLoadNativeLibraries(getIntent().getStringExtra("COCOS_PLAY_JS_LIB_NAME"));
+        onLoadNativeLibraries(getIntent().getStringExtra("COCOSPLAY_JS_LIB_NAME"));
 
         sContext = this;
         CocosViewWrapper.setContext(sContext);
@@ -110,10 +110,10 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         
         Cocos2dxHelper.init(this,this.getClassLoader());
         
-        String gamePath = getIntent().getStringExtra("COCOS_PLAY_JS_GAME_PATH");
+        String gamePath = getIntent().getStringExtra("COCOSPLAY_JS_GAME_PATH");
         if (gamePath != null && gamePath.length() > 0)
         {
-        	Cocos2dxHelper.setSearchPath("/mnt/sdcard/gameEnginePlay");
+        	Cocos2dxHelper.setSearchPath(gamePath);
         }
         
         
