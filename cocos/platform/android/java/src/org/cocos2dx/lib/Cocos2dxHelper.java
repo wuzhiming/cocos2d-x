@@ -102,6 +102,7 @@ public class Cocos2dxHelper {
         }
     }
     public static void init(final Activity activity,View view,ClassLoader loader) {
+    	Log.e("cocos2dxHelper", "init start " + sInited);
         if (!sInited) {
             final ApplicationInfo applicationInfo = activity.getApplicationInfo();
             
@@ -110,6 +111,7 @@ public class Cocos2dxHelper {
             Cocos2dxHelper.sPackageName = applicationInfo.packageName;
             Cocos2dxHelper.sFileDirectory = activity.getFilesDir().getAbsolutePath();
             Log.e("helper", Cocos2dxHelper.sFileDirectory);
+            Log.e("sourceDir", applicationInfo.sourceDir);
             Cocos2dxHelper.nativeSetApkPath(applicationInfo.sourceDir);
             Cocos2dxHelper.sCocos2dxAccelerometer = new Cocos2dxAccelerometer(activity);
             Cocos2dxHelper.sCocos2dMusic = new Cocos2dxMusic(activity);
@@ -157,7 +159,7 @@ public class Cocos2dxHelper {
     private static native void nativeSetEditTextDialogResult(final byte[] pBytes);
 
     private static native void nativeSetContext(ClassLoader loader, final AssetManager pAssetManager);
-
+    
     public static String getCocos2dxPackageName() {
         return Cocos2dxHelper.sPackageName;
     }
@@ -292,6 +294,7 @@ public class Cocos2dxHelper {
     public static void end() {
         Cocos2dxHelper.sCocos2dMusic.end();
         Cocos2dxHelper.sCocos2dSound.end();
+        sInited = false;
     }
 
     public static void onResume() {
@@ -319,7 +322,8 @@ public class Cocos2dxHelper {
     }
     
     public static void terminateProcess() {
-        android.os.Process.killProcess(android.os.Process.myPid());
+        //android.os.Process.killProcess(android.os.Process.myPid());
+    	sActivity.finish();
     }
 
     private static void showDialog(final String pTitle, final String pMessage) {

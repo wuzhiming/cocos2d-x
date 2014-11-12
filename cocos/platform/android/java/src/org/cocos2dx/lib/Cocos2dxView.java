@@ -36,6 +36,9 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	private Cocos2dxView m_cocoView = null;
 	protected FrameLayout mFrameLayout = null;
 	private Cocos2dxHandler mHandler;
+
+	private static boolean loadLibraryFlag = false;
+	
 	public Cocos2dxView(Context context) {
 		super(context);
 		m_ctx = context;
@@ -45,14 +48,20 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	}
 	private void viewOnCreate(){
 		Log.e("cocos", "in viewOnCreate");
-		onLoadNativeLibrariesFromSdCard();
+		
+		if (!loadLibraryFlag)
+		{
+			onLoadNativeLibrariesFromSdCard();
+			loadLibraryFlag = true;
+		}
+		
 		
 		Activity curAct = (Activity)m_ctx;
 		Log.e("cocos", "Cocos2dxHelper init start");
 		Cocos2dxHelper.init(curAct,this,this.getClass().getClassLoader());
 		Log.e("cocos", "Cocos2dxHelper init over");
         this.glContextAttrs = getGLContextAttrs();
-
+        Log.e("cocos", "getGLContextAttrs over");
         this.setEGLConfigChooser(5, 6, 5, 0, 16, 8);
         init();
         Log.e("cocos", "create over");
@@ -103,7 +112,6 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
 	 protected void onLoadNativeLibrariesFromSdCard() {
 		try {
 			
-			System.gc(); // avoid last classloader is not release, and current load same so file
 			
 			Log.e("cocos", "load start--------------");
 			String fileName = "libcocos2djs.so";
@@ -179,6 +187,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements Cocos2dxHelpe
         this.onPause();
     }
     public void viewOnDestory(){
+    	Cocos2dxHelper.end();
     	
     }
     
