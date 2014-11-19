@@ -128,7 +128,10 @@ bool Director::init(void)
 
     // purge ?
     _purgeDirectorInNextLoop = false;
-
+#if CC_ENABLE_SCRIPT_BINDING
+	// restart ?
+	_restartDirectorInNextLoop = false;
+#endif
     _winSizeInPoints = Size::ZERO;
 
     _openGLView = nullptr;
@@ -941,8 +944,14 @@ void Director::end()
     _purgeDirectorInNextLoop = true;
 }
 
+void Director::restart()
+{
+	_restartDirectorInNextLoop = true;
+}
+
 void Director::restartDirector()
 {
+#if CC_ENABLE_SCRIPT_BINDING
 	// cleanup scheduler
 	//getScheduler()->unscheduleAll();
 	// Disable event dispatching
@@ -1004,16 +1013,17 @@ void Director::restartDirector()
 	{
 		_eventDispatcher->setEnabled(true);
 	}
+
+	// release the objects
+	PoolManager::getInstance()->getCurrentPool()->clear();
+
+	ScriptEvent scriptEvent(kRestartGame, NULL);
+	ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&scriptEvent);
+#endif
 }
 
 void Director::purgeDirector()
 {
-	#if CC_ENABLE_SCRIPT_BINDING
-	ScriptEvent scriptEvent(kRestartGame, NULL);
-	ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&scriptEvent);
-	return;
-	#endif
-	
     // cleanup scheduler
     getScheduler()->unscheduleAll();
     
@@ -1334,6 +1344,7 @@ void Director::setEventDispatcher(EventDispatcher* dispatcher)
     }
 }
 
+
 /***************************************************
 * implementation of DisplayLinkDirector
 **************************************************/
@@ -1365,6 +1376,13 @@ void DisplayLinkDirector::mainLoop()
         _purgeDirectorInNextLoop = false;
         purgeDirector();
     }
+#if CC_ENABLE_SCRIPT_BINDING
+	else if (_restartDirectorInNextLoop)
+	{
+		_restartDirectorInNextLoop = false;
+		restartDirector();
+	}
+#endif
     else if (! _invalid)
     {
         drawScene();
