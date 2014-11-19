@@ -401,6 +401,8 @@ public:
 
 protected:
     void purgeDirector();
+	void restartDirector();
+
     bool _purgeDirectorInNextLoop; // this flag will be set to true in end()
     
     void setNextScene();
