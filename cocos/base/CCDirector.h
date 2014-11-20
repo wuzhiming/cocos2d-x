@@ -291,6 +291,11 @@ public:
      */
     void end();
 
+	/** restart the execution
+     * @lua endToLua
+     */
+    void restart();
+
     /** Pauses the running scene.
      The running scene will be _drawed_ but all scheduled timers will be paused
      While paused, the draw rate will be 4 FPS to reduce CPU consumption
@@ -401,8 +406,12 @@ public:
 
 protected:
     void purgeDirector();
+	void restartDirector();
+
     bool _purgeDirectorInNextLoop; // this flag will be set to true in end()
-    
+#if CC_ENABLE_SCRIPT_BINDING
+	bool _restartDirectorInNextLoop; // this flag will be set to true in restart()
+#endif    
     void setNextScene();
     
     void showStats();
