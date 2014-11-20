@@ -62,6 +62,7 @@ void Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeInit(JNIEnv*  env, jobject thi
     auto glview = director->getOpenGLView();
     if (!glview)
     {
+        LOGD("Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeInit create");
         glview = cocos2d::GLViewImpl::create("Android app");
         glview->setFrameSize(w, h);
         director->setOpenGLView(glview);
@@ -72,6 +73,7 @@ void Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeInit(JNIEnv*  env, jobject thi
     }
     else
     {
+        LOGD("Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeInit exist");
         cocos2d::GL::invalidateStateCache();
         cocos2d::GLProgramCache::getInstance()->reloadDefaultGLPrograms();
         cocos2d::DrawPrimitives::init();
@@ -80,7 +82,16 @@ void Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeInit(JNIEnv*  env, jobject thi
         cocos2d::EventCustom recreatedEvent(EVENT_RENDERER_RECREATED);
         director->getEventDispatcher()->dispatchEvent(&recreatedEvent);
         director->setGLDefaultValues();
+
+        //cocos2d::Application::getInstance()->run();
     }
+}
+
+void Java_org_cocos2dx_lib_Cocos2dxView_destroyDirector(JNIEnv*  env, jobject thiz)
+{
+    //delete Application::getInstance();
+    //Director::getInstance()->restart();
+     //cocos2d::Application::getInstance()->applicationDidFinishLaunching();
 }
 
 jintArray Java_org_cocos2dx_lib_Cocos2dxActivity_getGLContextAttrs(JNIEnv*  env, jobject thiz)

@@ -56,6 +56,8 @@ public class Cocos2dxRenderer implements GLSurfaceView.Renderer {
     // Getter & Setter
     // ===========================================================
 
+    private static boolean sInit = false;
+    
     public static void setAnimationInterval(final double pAnimationInterval) {
         Cocos2dxRenderer.sAnimationInterval = (long) (pAnimationInterval * Cocos2dxRenderer.NANOSECONDSPERSECOND);
     }
@@ -71,7 +73,7 @@ public class Cocos2dxRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(final GL10 pGL10, final EGLConfig pEGLConfig) {
-        Cocos2dxRenderer.nativeInit(this.mScreenWidth, this.mScreenHeight);
+    	Cocos2dxRenderer.nativeInit(this.mScreenWidth, this.mScreenHeight);
         this.mLastTickInNanoSeconds = System.nanoTime();
         mNativeInitCompleted = true;
     }

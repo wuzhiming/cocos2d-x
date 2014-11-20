@@ -37,13 +37,17 @@ THE SOFTWARE.
 #include "base/CCDirector.h"
 #endif
 
+
+
 NS_CC_BEGIN
 
 //CCLabelAtlas - Creation & Init
 
 LabelAtlas* LabelAtlas::create()
 {
+    LOGD("LabelAtlas::create");
     LabelAtlas* ret = new (std::nothrow) LabelAtlas();
+    LOGD("LabelAtlas::create 1");
     if (ret)
     {
         ret->autorelease();
@@ -52,7 +56,7 @@ LabelAtlas* LabelAtlas::create()
     {
         CC_SAFE_RELEASE_NULL(ret);
     }
-    
+    LOGD("LabelAtlas::create 2");
     return ret;
 }
 

@@ -294,7 +294,7 @@ public class Cocos2dxHelper {
     public static void end() {
         Cocos2dxHelper.sCocos2dMusic.end();
         Cocos2dxHelper.sCocos2dSound.end();
-        sInited = false;
+        //sInited = false;
     }
 
     public static void onResume() {
@@ -323,7 +323,8 @@ public class Cocos2dxHelper {
     
     public static void terminateProcess() {
         //android.os.Process.killProcess(android.os.Process.myPid());
-    	sActivity.finish();
+    	//end();
+    	//sActivity.finish();
     }
 
     private static void showDialog(final String pTitle, final String pMessage) {
