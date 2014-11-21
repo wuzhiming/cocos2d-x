@@ -952,83 +952,89 @@ void Director::restart()
 	_restartDirectorInNextLoop = true;
 }
 
+void Director::cleanDirector()
+{
+    #if CC_ENABLE_SCRIPT_BINDING
+    // cleanup scheduler
+    //getScheduler()->unscheduleAll();
+    // Disable event dispatching
+    if (_eventDispatcher)
+    {
+        _eventDispatcher->setEnabled(false);
+    }
+
+    if (_runningScene)
+    {
+        _runningScene->onExit();
+        _runningScene->cleanup();
+        _runningScene->release();
+    }
+
+    _runningScene = nullptr;
+    _nextScene = nullptr;
+
+    // remove all objects, but don't release it.
+    // runWithScene might be executed after 'end'.
+    _scenesStack.clear();
+
+    //stopAnimation();
+
+    CC_SAFE_RELEASE_NULL(_FPSLabel);
+    CC_SAFE_RELEASE_NULL(_drawnBatchesLabel);
+    CC_SAFE_RELEASE_NULL(_drawnVerticesLabel);
+
+    // purge bitmap cache
+    FontFNT::purgeCachedData();
+
+    FontFreeType::shutdownFreeType();
+
+    // purge all managed caches
+
+    AnimationCache::destroyInstance();
+    SpriteFrameCache::destroyInstance();
+    GLProgramCache::destroyInstance();
+    GLProgramStateCache::destroyInstance();
+    FileUtils::destroyInstance();
+
+    // cocos2d-x specific data structures
+    UserDefault::destroyInstance();
+
+    GL::invalidateStateCache();
+
+    //destroyTextureCache();
+    _textureCache->removeAllTextures();
+
+    // OpenGL view
+//  if (_openGLView)
+//  {
+//      _openGLView->release();
+//      _openGLView = nullptr;
+//  }
+
+    // Disable event dispatching
+    if (_eventDispatcher)
+    {
+        _eventDispatcher->setEnabled(true);
+    }
+
+    // release the objects
+    PoolManager::getInstance()->getCurrentPool()->clear();
+
+    ScriptEvent scriptEvent(kCleanupVM, NULL);
+    ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&scriptEvent);
+#endif
+}
+
 void Director::restartDirector()
 {
-#if CC_ENABLE_SCRIPT_BINDING
-	// cleanup scheduler
-	//getScheduler()->unscheduleAll();
-	// Disable event dispatching
-	if (_eventDispatcher)
-	{
-		_eventDispatcher->setEnabled(false);
-	}
-
-	if (_runningScene)
-	{
-		_runningScene->onExit();
-		_runningScene->cleanup();
-		_runningScene->release();
-	}
-
-	_runningScene = nullptr;
-	_nextScene = nullptr;
-
-	// remove all objects, but don't release it.
-	// runWithScene might be executed after 'end'.
-	_scenesStack.clear();
-
-	//stopAnimation();
-
-	CC_SAFE_RELEASE_NULL(_FPSLabel);
-	CC_SAFE_RELEASE_NULL(_drawnBatchesLabel);
-	CC_SAFE_RELEASE_NULL(_drawnVerticesLabel);
-
-	// purge bitmap cache
-	FontFNT::purgeCachedData();
-
-	FontFreeType::shutdownFreeType();
-
-	// purge all managed caches
-
-	AnimationCache::destroyInstance();
-	SpriteFrameCache::destroyInstance();
-	GLProgramCache::destroyInstance();
-	GLProgramStateCache::destroyInstance();
-	FileUtils::destroyInstance();
-
-	// cocos2d-x specific data structures
-	UserDefault::destroyInstance();
-
-	GL::invalidateStateCache();
-
-	//destroyTextureCache();
-	_textureCache->removeAllTextures();
-
-	// OpenGL view
-// 	if (_openGLView)
-// 	{
-// 		_openGLView->release();
-// 		_openGLView = nullptr;
-// 	}
-
-	// Disable event dispatching
-	if (_eventDispatcher)
-	{
-		_eventDispatcher->setEnabled(true);
-	}
-
-	// release the objects
-	PoolManager::getInstance()->getCurrentPool()->clear();
-
-	ScriptEvent scriptEvent(kRestartGame, NULL);
-	ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&scriptEvent);
-#endif
+    cleanDirector();
+    Application::getInstance()->applicationDidFinishLaunching();
 }
 
 void Director::purgeDirector()
 {
     // cleanup scheduler
-    //getScheduler()->unscheduleAll();
+    getScheduler()->unscheduleAll();
     
     // Disable event dispatching
     if (_eventDispatcher)
@@ -1050,7 +1056,7 @@ void Director::purgeDirector()
     // runWithScene might be executed after 'end'.
     _scenesStack.clear();
 
-    //stopAnimation();
+    stopAnimation();
 
     CC_SAFE_RELEASE_NULL(_FPSLabel);
     CC_SAFE_RELEASE_NULL(_drawnBatchesLabel);
@@ -1063,18 +1069,18 @@ void Director::purgeDirector()
 
     // purge all managed caches
     
-// #if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-// #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-// #elif _MSC_VER >= 1400 //vs 2005 or higher
-// #pragma warning (push)
-// #pragma warning (disable: 4996)
-// #endif
-//     DrawPrimitives::free();
-// #if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-// #pragma GCC diagnostic warning "-Wdeprecated-declarations"
-// #elif _MSC_VER >= 1400 //vs 2005 or higher
-// #pragma warning (pop)
-// #endif
+#if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#elif _MSC_VER >= 1400 //vs 2005 or higher
+#pragma warning (push)
+#pragma warning (disable: 4996)
+#endif
+    DrawPrimitives::free();
+#if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
+#pragma GCC diagnostic warning "-Wdeprecated-declarations"
+#elif _MSC_VER >= 1400 //vs 2005 or higher
+#pragma warning (pop)
+#endif
     AnimationCache::destroyInstance();
     SpriteFrameCache::destroyInstance();
     GLProgramCache::destroyInstance();
@@ -1086,36 +1092,24 @@ void Director::purgeDirector()
     
     GL::invalidateStateCache();
     
-    //destroyTextureCache();
-    _textureCache->removeAllTextures();
+    destroyTextureCache();
 
     CHECK_GL_ERROR_DEBUG();
 
 #if CC_ENABLE_SCRIPT_BINDING
     // release the objects
     PoolManager::getInstance()->getCurrentPool()->clear();
-    ScriptEvent scriptEvent(kCleanupVM, NULL);
-    ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&scriptEvent);
-if (_eventDispatcher)
-    {
-        _eventDispatcher->setEnabled(true);
-    }
-    // if (_eventDispatcher)
-    // {
-    //     _eventDispatcher->setEnabled(true);
-    // }
-
-    //delete Application::getInstance();
+    delete Application::getInstance();
 #endif    
     // OpenGL view
     if (_openGLView)
     {
         _openGLView->end();
-        //_openGLView = nullptr;
+        _openGLView = nullptr;
     }
 
     // delete Director
-    //release();
+    release();
 }
 
 void Director::setNextScene()

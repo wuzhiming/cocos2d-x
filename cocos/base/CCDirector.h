@@ -404,10 +404,10 @@ public:
      */
     float getFrameRate() const { return _frameRate; }
 
+    void cleanDirector();
 protected:
+    void restartDirector();
     void purgeDirector();
-	void restartDirector();
-
     bool _purgeDirectorInNextLoop; // this flag will be set to true in end()
 #if CC_ENABLE_SCRIPT_BINDING
 	bool _restartDirectorInNextLoop; // this flag will be set to true in restart()

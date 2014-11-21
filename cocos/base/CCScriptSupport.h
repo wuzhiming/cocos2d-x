@@ -214,6 +214,8 @@ enum ScriptEventType
     kComponentEvent,
 	kRestartGame,
     kCleanupVM,
+    kCleanScriptingThread,
+    kSetScriptingThread
 };
 
 struct BasicScriptData

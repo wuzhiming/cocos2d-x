@@ -83,14 +83,15 @@ void Java_org_cocos2dx_lib_Cocos2dxRenderer_nativeInit(JNIEnv*  env, jobject thi
         director->getEventDispatcher()->dispatchEvent(&recreatedEvent);
         director->setGLDefaultValues();
 
-        //cocos2d::Application::getInstance()->run();
+        cocos2d::Application::getInstance()->applicationDidFinishLaunching();
     }
 }
 
 void Java_org_cocos2dx_lib_Cocos2dxView_destroyDirector(JNIEnv*  env, jobject thiz)
 {
+    Director::getInstance()->cleanDirector();
     //delete Application::getInstance();
-    //Director::getInstance()->restart();
+    //Director::getInstance()->restartDirector();
      //cocos2d::Application::getInstance()->applicationDidFinishLaunching();
 }
 
