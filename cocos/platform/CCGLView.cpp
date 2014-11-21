@@ -29,6 +29,9 @@ THE SOFTWARE.
 #include "base/CCDirector.h"
 #include "base/CCEventDispatcher.h"
 
+#define  LOG_TAG    "ScriptingCore.cpp"
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
+
 NS_CC_BEGIN
 
 namespace {
@@ -121,6 +124,7 @@ void GLView::pollEvents()
 
 void GLView::updateDesignResolutionSize()
 {
+    LOGD("updateDesignResolutionSize 1");
     if (_screenSize.width > 0 && _screenSize.height > 0
         && _designResolutionSize.width > 0 && _designResolutionSize.height > 0)
     {
@@ -152,17 +156,22 @@ void GLView::updateDesignResolutionSize()
         float viewPortH = _designResolutionSize.height * _scaleY;
         
         _viewPortRect.setRect((_screenSize.width - viewPortW) / 2, (_screenSize.height - viewPortH) / 2, viewPortW, viewPortH);
-        
+        LOGD("updateDesignResolutionSize 2");
         // reset director's member variables to fit visible rect
         auto director = Director::getInstance();
+        LOGD("updateDesignResolutionSize 3");
         director->_winSizeInPoints = getDesignResolutionSize();
+        LOGD("updateDesignResolutionSize 4");
         director->createStatsLabel();
+        LOGD("updateDesignResolutionSize 5");
         director->setGLDefaultValues();
+        LOGD("updateDesignResolutionSize 6");
     }
 }
 
 void GLView::setDesignResolutionSize(float width, float height, ResolutionPolicy resolutionPolicy)
 {
+    LOGD("setDesignResolutionSize");
     CCASSERT(resolutionPolicy != ResolutionPolicy::UNKNOWN, "should set resolutionPolicy");
     
     if (width == 0.0f || height == 0.0f)
@@ -172,7 +181,7 @@ void GLView::setDesignResolutionSize(float width, float height, ResolutionPolicy
 
     _designResolutionSize.setSize(width, height);
     _resolutionPolicy = resolutionPolicy;
-    
+    LOGD("setDesignResolutionSize 2");
     updateDesignResolutionSize();
  }
 

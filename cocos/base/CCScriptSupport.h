@@ -211,7 +211,9 @@ enum ScriptEventType
     kAccelerometerEvent,
     kControlEvent,
     kCommonEvent,
-    kComponentEvent
+    kComponentEvent,
+	kRestartGame,
+    kCleanupVM,
 };
 
 struct BasicScriptData

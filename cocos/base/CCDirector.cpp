@@ -58,6 +58,9 @@ THE SOFTWARE.
 #include "base/CCAutoreleasePool.h"
 #include "base/CCConfiguration.h"
 #include "platform/CCApplication.h"
+#if CC_ENABLE_SCRIPT_BINDING
+#include "CCScriptSupport.h"
+#endif
 //#include "platform/CCGLViewImpl.h"
 
 /**
@@ -68,6 +71,9 @@ THE SOFTWARE.
 #ifndef CC_DIRECTOR_STATS_POSITION
 #define CC_DIRECTOR_STATS_POSITION Director::getInstance()->getVisibleOrigin()
 #endif
+
+#define  LOG_TAG    "main"
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 
 using namespace std;
 
@@ -125,7 +131,10 @@ bool Director::init(void)
 
     // purge ?
     _purgeDirectorInNextLoop = false;
-
+#if CC_ENABLE_SCRIPT_BINDING
+	// restart ?
+	_restartDirectorInNextLoop = false;
+#endif
     _winSizeInPoints = Size::ZERO;
 
     _openGLView = nullptr;
@@ -938,10 +947,88 @@ void Director::end()
     _purgeDirectorInNextLoop = true;
 }
 
+void Director::restart()
+{
+	_restartDirectorInNextLoop = true;
+}
+
+void Director::restartDirector()
+{
+#if CC_ENABLE_SCRIPT_BINDING
+	// cleanup scheduler
+	//getScheduler()->unscheduleAll();
+	// Disable event dispatching
+	if (_eventDispatcher)
+	{
+		_eventDispatcher->setEnabled(false);
+	}
+
+	if (_runningScene)
+	{
+		_runningScene->onExit();
+		_runningScene->cleanup();
+		_runningScene->release();
+	}
+
+	_runningScene = nullptr;
+	_nextScene = nullptr;
+
+	// remove all objects, but don't release it.
+	// runWithScene might be executed after 'end'.
+	_scenesStack.clear();
+
+	//stopAnimation();
+
+	CC_SAFE_RELEASE_NULL(_FPSLabel);
+	CC_SAFE_RELEASE_NULL(_drawnBatchesLabel);
+	CC_SAFE_RELEASE_NULL(_drawnVerticesLabel);
+
+	// purge bitmap cache
+	FontFNT::purgeCachedData();
+
+	FontFreeType::shutdownFreeType();
+
+	// purge all managed caches
+
+	AnimationCache::destroyInstance();
+	SpriteFrameCache::destroyInstance();
+	GLProgramCache::destroyInstance();
+	GLProgramStateCache::destroyInstance();
+	FileUtils::destroyInstance();
+
+	// cocos2d-x specific data structures
+	UserDefault::destroyInstance();
+
+	GL::invalidateStateCache();
+
+	//destroyTextureCache();
+	_textureCache->removeAllTextures();
+
+	// OpenGL view
+// 	if (_openGLView)
+// 	{
+// 		_openGLView->release();
+// 		_openGLView = nullptr;
+// 	}
+
+	// Disable event dispatching
+	if (_eventDispatcher)
+	{
+		_eventDispatcher->setEnabled(true);
+	}
+
+	// release the objects
+	PoolManager::getInstance()->getCurrentPool()->clear();
+
+	ScriptEvent scriptEvent(kRestartGame, NULL);
+	ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&scriptEvent);
+#endif
+}
+
 void Director::purgeDirector()
 {
     // cleanup scheduler
-    getScheduler()->unscheduleAll();
+    //getScheduler()->unscheduleAll();
     
     // Disable event dispatching
     if (_eventDispatcher)
@@ -963,7 +1050,7 @@ void Director::purgeDirector()
     // runWithScene might be executed after 'end'.
     _scenesStack.clear();
 
-    stopAnimation();
+    //stopAnimation();
 
     CC_SAFE_RELEASE_NULL(_FPSLabel);
     CC_SAFE_RELEASE_NULL(_drawnBatchesLabel);
@@ -976,18 +1063,18 @@ void Director::purgeDirector()
 
     // purge all managed caches
     
-#if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#elif _MSC_VER >= 1400 //vs 2005 or higher
-#pragma warning (push)
-#pragma warning (disable: 4996)
-#endif
-    DrawPrimitives::free();
-#if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-#pragma GCC diagnostic warning "-Wdeprecated-declarations"
-#elif _MSC_VER >= 1400 //vs 2005 or higher
-#pragma warning (pop)
-#endif
+// #if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
+// #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+// #elif _MSC_VER >= 1400 //vs 2005 or higher
+// #pragma warning (push)
+// #pragma warning (disable: 4996)
+// #endif
+//     DrawPrimitives::free();
+// #if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
+// #pragma GCC diagnostic warning "-Wdeprecated-declarations"
+// #elif _MSC_VER >= 1400 //vs 2005 or higher
+// #pragma warning (pop)
+// #endif
     AnimationCache::destroyInstance();
     SpriteFrameCache::destroyInstance();
     GLProgramCache::destroyInstance();
@@ -999,19 +1086,36 @@ void Director::purgeDirector()
     
     GL::invalidateStateCache();
     
-    destroyTextureCache();
+    //destroyTextureCache();
+    _textureCache->removeAllTextures();
 
     CHECK_GL_ERROR_DEBUG();
-    
+
+#if CC_ENABLE_SCRIPT_BINDING
+    // release the objects
+    PoolManager::getInstance()->getCurrentPool()->clear();
+    ScriptEvent scriptEvent(kCleanupVM, NULL);
+    ScriptEngineManager::getInstance()->getScriptEngine()->sendEvent(&scriptEvent);
+if (_eventDispatcher)
+    {
+        _eventDispatcher->setEnabled(true);
+    }
+    // if (_eventDispatcher)
+    // {
+    //     _eventDispatcher->setEnabled(true);
+    // }
+
+    //delete Application::getInstance();
+#endif    
     // OpenGL view
     if (_openGLView)
     {
         _openGLView->end();
-        _openGLView = nullptr;
+        //_openGLView = nullptr;
     }
 
     // delete Director
-    release();
+    //release();
 }
 
 void Director::setNextScene()
@@ -1144,39 +1248,47 @@ void Director::getFPSImageData(unsigned char** datapointer, ssize_t* length)
 
 void Director::createStatsLabel()
 {
+    LOGD("createStatsLabel 1");
     Texture2D *texture = nullptr;
     std::string fpsString = "00.0";
     std::string drawBatchString = "000";
     std::string drawVerticesString = "00000";
     if (_FPSLabel)
     {
+
+        LOGD("createStatsLabel 1 2");
         fpsString = _FPSLabel->getString();
         drawBatchString = _drawnBatchesLabel->getString();
         drawVerticesString = _drawnVerticesLabel->getString();
-        
+        LOGD("createStatsLabel 1 3");
         CC_SAFE_RELEASE_NULL(_FPSLabel);
         CC_SAFE_RELEASE_NULL(_drawnBatchesLabel);
         CC_SAFE_RELEASE_NULL(_drawnVerticesLabel);
+        LOGD("createStatsLabel 1 4");
         _textureCache->removeTextureForKey("/cc_fps_images");
+        LOGD("createStatsLabel 1 4 1");
         FileUtils::getInstance()->purgeCachedEntries();
+        LOGD("createStatsLabel 1 5");
     }
-
+    LOGD("createStatsLabel 2");
     Texture2D::PixelFormat currentFormat = Texture2D::getDefaultAlphaPixelFormat();
+    LOGD("createStatsLabel 3");
     Texture2D::setDefaultAlphaPixelFormat(Texture2D::PixelFormat::RGBA4444);
+    LOGD("createStatsLabel 4");
     unsigned char *data = nullptr;
     ssize_t dataLength = 0;
     getFPSImageData(&data, &dataLength);
-
+    LOGD("createStatsLabel 5");
     Image* image = new (std::nothrow) Image();
     bool isOK = image->initWithImageData(data, dataLength);
     if (! isOK) {
         CCLOGERROR("%s", "Fails: init fps_images");
         return;
     }
-
+    LOGD("createStatsLabel 6");
     texture = _textureCache->addImage(image, "/cc_fps_images");
     CC_SAFE_RELEASE(image);
-
+    LOGD("createStatsLabel 7");
     /*
      We want to use an image which is stored in the file named ccFPSImage.c 
      for any design resolutions and all resource resolutions. 
@@ -1186,32 +1298,37 @@ void Director::createStatsLabel()
      this is not exposed to game developers, it's only used for displaying FPS now.
      */
     float scaleFactor = 1 / CC_CONTENT_SCALE_FACTOR();
-
+LOGD("createStatsLabel 7 1");
     _FPSLabel = LabelAtlas::create();
+    LOGD("createStatsLabel 7 2");
     _FPSLabel->retain();
+    LOGD("createStatsLabel 7 3");
     _FPSLabel->setIgnoreContentScaleFactor(true);
+    LOGD("createStatsLabel 7 4");
     _FPSLabel->initWithString(fpsString, texture, 12, 32 , '.');
+    LOGD("createStatsLabel 7 5");
     _FPSLabel->setScale(scaleFactor);
-
+LOGD("createStatsLabel 8");
     _drawnBatchesLabel = LabelAtlas::create();
     _drawnBatchesLabel->retain();
     _drawnBatchesLabel->setIgnoreContentScaleFactor(true);
     _drawnBatchesLabel->initWithString(drawBatchString, texture, 12, 32, '.');
     _drawnBatchesLabel->setScale(scaleFactor);
-
+LOGD("createStatsLabel 9");
     _drawnVerticesLabel = LabelAtlas::create();
     _drawnVerticesLabel->retain();
     _drawnVerticesLabel->setIgnoreContentScaleFactor(true);
     _drawnVerticesLabel->initWithString(drawVerticesString, texture, 12, 32, '.');
     _drawnVerticesLabel->setScale(scaleFactor);
 
-
+LOGD("createStatsLabel 10");
     Texture2D::setDefaultAlphaPixelFormat(currentFormat);
 
     const int height_spacing = 22 / CC_CONTENT_SCALE_FACTOR();
     _drawnVerticesLabel->setPosition(Vec2(0, height_spacing*2) + CC_DIRECTOR_STATS_POSITION);
     _drawnBatchesLabel->setPosition(Vec2(0, height_spacing*1) + CC_DIRECTOR_STATS_POSITION);
     _FPSLabel->setPosition(Vec2(0, height_spacing*0)+CC_DIRECTOR_STATS_POSITION);
+LOGD("createStatsLabel 11");
 }
 
 void Director::setContentScaleFactor(float scaleFactor)
@@ -1260,6 +1377,7 @@ void Director::setEventDispatcher(EventDispatcher* dispatcher)
     }
 }
 
+
 /***************************************************
 * implementation of DisplayLinkDirector
 **************************************************/
@@ -1291,6 +1409,13 @@ void DisplayLinkDirector::mainLoop()
         _purgeDirectorInNextLoop = false;
         purgeDirector();
     }
+#if CC_ENABLE_SCRIPT_BINDING
+	else if (_restartDirectorInNextLoop)
+	{
+		_restartDirectorInNextLoop = false;
+		restartDirector();
+	}
+#endif
     else if (! _invalid)
     {
         drawScene();

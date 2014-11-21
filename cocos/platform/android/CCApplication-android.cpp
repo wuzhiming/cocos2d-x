@@ -56,6 +56,7 @@ Application::~Application()
 
 int Application::run()
 {
+    LOGD("Application::run");
     // Initialize instance and cocos2d.
     if (! applicationDidFinishLaunching())
     {

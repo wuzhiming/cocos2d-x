@@ -31,6 +31,10 @@ THE SOFTWARE.
 #if CC_LABELATLAS_DEBUG_DRAW
 #include "renderer/CCCustomCommand.h"
 #endif
+
+#define  LOG_TAG    "main"
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
+
 NS_CC_BEGIN
 
 /**
@@ -91,9 +95,13 @@ CC_CONSTRUCTOR_ACCESS:
     LabelAtlas()
     :_string("")
     {
+        LOGD("LabelAtlas CONSTRUCTOR 1");
 #if CC_LABELATLAS_DEBUG_DRAW
+        LOGD("LabelAtlas CONSTRUCTOR 2");
         _debugDrawNode = DrawNode::create();
+        LOGD("LabelAtlas CONSTRUCTOR 3");
         addChild(_debugDrawNode);
+        LOGD("LabelAtlas CONSTRUCTOR 4");
 #endif
     }
 
