@@ -68,6 +68,7 @@ public class Cocos2dxHelper {
     private static Cocos2dxHelperListener sCocos2dxHelperListener;
     private static Set<OnActivityResultListener> onActivityResultListeners = new LinkedHashSet<OnActivityResultListener>();
 
+    private static String searchPath = "";
 
     // ===========================================================
     // Constructors
@@ -128,6 +129,16 @@ public class Cocos2dxHelper {
     }
     public static Activity getActivity() {
         return sActivity;
+    }
+    
+    public static void setSearchPath(String tempPath)
+    {
+    	searchPath = tempPath;
+    }
+    
+    public static String getSearchPath()
+    {
+    	return searchPath;
     }
     
     public static void addOnActivityResultListener(OnActivityResultListener listener) {

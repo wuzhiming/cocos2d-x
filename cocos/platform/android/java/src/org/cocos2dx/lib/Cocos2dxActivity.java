@@ -77,8 +77,14 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
         });
     }
     
-    protected void onLoadNativeLibraries() {
+    protected void onLoadNativeLibraries(String externalLibName) {
         try {
+        	if (externalLibName != null && externalLibName.length() > 0)
+        	{
+        		System.loadLibrary(externalLibName);
+        		return;
+        	}
+        	
             ApplicationInfo ai = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
             Bundle bundle = ai.metaData;
             String libName = bundle.getString("android.app.lib_name");
@@ -96,12 +102,20 @@ public abstract class Cocos2dxActivity extends Activity implements Cocos2dxHelpe
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        onLoadNativeLibraries();
+        onLoadNativeLibraries(getIntent().getStringExtra("COCOSPLAY_JS_LIB_NAME"));
 
         sContext = this;
+        CocosViewWrapper.setContext(sContext);
         this.mHandler = new Cocos2dxHandler(this);
         
         Cocos2dxHelper.init(this,this.getClassLoader());
+        
+        String gamePath = getIntent().getStringExtra("COCOSPLAY_JS_GAME_PATH");
+        if (gamePath != null && gamePath.length() > 0)
+        {
+        	Cocos2dxHelper.setSearchPath(gamePath);
+        }
+        
         
         this.glContextAttrs = getGLContextAttrs();
         this.init();
