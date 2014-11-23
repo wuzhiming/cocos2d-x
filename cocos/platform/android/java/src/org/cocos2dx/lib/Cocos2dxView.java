@@ -64,7 +64,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		Log.e("cocos", "Cocos2dxHelper init start");
 		Cocos2dxHelper.init(curAct, this, this.getClass().getClassLoader());
 		Log.e("cocos", "Cocos2dxHelper init over");
-
+		Cocos2dxHelper.setSearchPath("/mnt/sdcard/gameEngine");
 		this.glContextAttrs = getGLContextAttrs();
 		
 		Log.e("cocos", "getGLContextAttrs over");
