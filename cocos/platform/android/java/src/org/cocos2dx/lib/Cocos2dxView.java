@@ -26,15 +26,18 @@ import android.os.Bundle;
 import android.os.Message;
 import android.preference.PreferenceManager.OnActivityResultListener;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		Cocos2dxHelperListener {
+
 	private Context m_ctx = null;
 	private Cocos2dxVideoHelper mVideoHelper = null;
 	private Cocos2dxWebViewHelper mWebViewHelper = null;
-	private int[] glContextAttrs;
+	
+	private int[] glContextAttrs = null;
 	private Cocos2dxView m_cocoView = null;
 	protected FrameLayout mFrameLayout = null;
 	private Cocos2dxHandler mHandler;
@@ -61,7 +64,9 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		Log.e("cocos", "Cocos2dxHelper init start");
 		Cocos2dxHelper.init(curAct, this, this.getClass().getClassLoader());
 		Log.e("cocos", "Cocos2dxHelper init over");
+		Cocos2dxHelper.setSearchPath("/mnt/sdcard/gameEngine");
 		this.glContextAttrs = getGLContextAttrs();
+		
 		Log.e("cocos", "getGLContextAttrs over");
 		this.setEGLConfigChooser(5, 6, 5, 0, 16, 8);
 		init();
@@ -109,10 +114,40 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		// ((Activity) m_ctx).setContentView(mFrameLayout);
 
 	}
-
+	
+	boolean flag = true;
+	
+	@Override
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		// TODO Auto-generated method stub
+		super.surfaceDestroyed(holder);
+		viewOnDestory();
+		while (true)
+		{
+			if (!flag)
+			{
+				break;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public void destroyGame()
 	{
-		destroyDirector();
+		runOnGLThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				System.out.println("destroyDirector");
+				destroyDirector();
+				flag = false;
+			}
+		});
 	}
 	
 	private static native void destroyDirector();
@@ -202,7 +237,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 	}
 
 	public void viewOnDestory() {
-		//Cocos2dxHelper.end();
+		Cocos2dxHelper.end();
 		destroyGame();
 	}
 
