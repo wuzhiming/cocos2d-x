@@ -41,7 +41,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 	private Cocos2dxView m_cocoView = null;
 	protected FrameLayout mFrameLayout = null;
 	private Cocos2dxHandler mHandler;
-
+	private boolean flag = true;
 	private static boolean loadLibraryFlag = false;
 
 	public Cocos2dxView(Context context) {
@@ -102,39 +102,26 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		mFrameLayout.addView(edittext);
 
 		// ...add to FrameLayout
-		// mFrameLayout.addView(this);
+		 mFrameLayout.addView(this);
 
 		if (isAndroidEmulator())
 			this.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
 
 		this.setCocos2dxRenderer(new Cocos2dxRenderer());
-		// this.setCocos2dxEditText(edittext);
+		this.setCocos2dxEditText(edittext);
 
 		// Set framelayout as the content view
-		// ((Activity) m_ctx).setContentView(mFrameLayout);
+		 ((Activity) m_ctx).setContentView(mFrameLayout);
 
 	}
 	
-	boolean flag = true;
+	
 	
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
+		Log.e("cocos","destroy");
 		// TODO Auto-generated method stub
 		super.surfaceDestroyed(holder);
-		viewOnDestory();
-		while (true)
-		{
-			if (!flag)
-			{
-				break;
-			}
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 	}
 	
 	public void destroyGame()
@@ -175,7 +162,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 	}
 
 	/**
-	 * 解压缩功能. 将zipFile文件解压到folderPath目录下.
+	 * ���������������. ���zipFile���������������folderPath���������.
 	 * 
 	 * @throws Exception
 	 */
@@ -226,7 +213,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		this.queueEvent(pRunnable);
 	}
 
-	public void vewOnResume() {
+	public void viewOnResume() {
 		Cocos2dxHelper.onResume();
 		this.onResume();
 	}
@@ -237,8 +224,21 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 	}
 
 	public void viewOnDestory() {
-		Cocos2dxHelper.end();
 		destroyGame();
+		while (true)
+		{
+			if (!flag)
+			{
+				break;
+			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		Cocos2dxHelper.end();
 	}
 
 	private final static boolean isAndroidEmulator() {
