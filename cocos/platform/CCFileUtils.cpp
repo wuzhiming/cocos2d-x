@@ -534,6 +534,25 @@ void FileUtils::purgeCachedEntries()
     _fullPathCache.clear();
 }
 
+void FileUtils::setDefaultResourceRootPath(const std::string& resRootPath)
+{
+    if (_defaultResRootPath == resRootPath)
+        return;
+    
+    // Delete the old default resource root path in search path array
+    auto iter = std::find(_searchPathArray.begin(), _searchPathArray.end(), _defaultResRootPath);
+    if (iter != _searchPathArray.end())
+    {
+        _searchPathArray.erase(iter);
+    }
+    
+    // Reset default resource root path
+    _defaultResRootPath = resRootPath;
+    
+    // Reset the search paths
+    setSearchPaths(_searchPathArray);
+}
+
 static Data getData(const std::string& filename, bool forString)
 {
     if (filename.empty())

@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "CCFileUtils-android.h"
 #include "platform/CCCommon.h"
 #include "jni/Java_org_cocos2dx_lib_Cocos2dxHelper.h"
+#include "jni/JniHelper.h"
 #include "android/asset_manager.h"
 #include "android/asset_manager_jni.h"
 
@@ -38,6 +39,14 @@ THE SOFTWARE.
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
 
 using namespace std;
+
+extern "C"
+{
+    JNIEXPORT void JNICALL Java_org_cocos2dx_lib_Cocos2dxActivity_nativeSetDefaultResourceRootPath(JNIEnv*  env, jobject thiz, jstring jResRootPath)
+    {
+        cocos2d::FileUtils::getInstance()->setDefaultResourceRootPath(cocos2d::JniHelper::jstring2string(jResRootPath));
+    }
+}
 
 NS_CC_BEGIN
 

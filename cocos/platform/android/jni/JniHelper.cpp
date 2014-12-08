@@ -57,7 +57,6 @@ jclass _getClassID(const char *className) {
 }
 
 void _detachCurrentThread(void* a) {
-    LOGE("_detachCurrentThread");
     cocos2d::JniHelper::getJavaVM()->DetachCurrentThread();
 }
 
@@ -82,29 +81,24 @@ namespace cocos2d {
     }
 
     JNIEnv* JniHelper::cacheEnv(JavaVM* jvm) {
-        LOGE("cacheEnv 1");
         JNIEnv* _env = nullptr;
         // get jni environment
         jint ret = jvm->GetEnv((void**)&_env, JNI_VERSION_1_4);
         
         switch (ret) {
         case JNI_OK :
-            LOGE("cacheEnv 2");
             // Success!
             pthread_setspecific(g_key, _env);
             return _env;
                 
         case JNI_EDETACHED :
-            LOGE("cacheEnv 3");
             // Thread not attached
             if (jvm->AttachCurrentThread(&_env, nullptr) < 0)
                 {
-                    LOGE("cacheEnv 4");
                     LOGE("Failed to get the environment using AttachCurrentThread()");
 
                     return nullptr;
                 } else {
-                    LOGE("cacheEnv 5");
                 // Success : Attached and obtained JNIEnv!
                 pthread_setspecific(g_key, _env);
                 return _env;
@@ -126,20 +120,21 @@ namespace cocos2d {
         return _env;
     }
 
-    bool JniHelper::setClassLoaderFrom(jobject classloader) {
-//        JniMethodInfo _getclassloaderMethod;
-//        if (!JniHelper::getMethodInfo_DefaultClassLoader(_getclassloaderMethod,
-//                                                         "android/content/Context",
-//                                                         "getClassLoader",
-//                                                         "()Ljava/lang/ClassLoader;")) {
-//            return false;
-//        }
+    bool JniHelper::setClassLoaderFrom(jobject clsLoader) {
+        // JniMethodInfo _getclassloaderMethod;
+        // if (!JniHelper::getMethodInfo_DefaultClassLoader(_getclassloaderMethod,
+        //                                                  "android/content/Context",
+        //                                                  "getClassLoader",
+        //                                                  "()Ljava/lang/ClassLoader;")) {
+        //     return false;
+        // }
 
-        jobject _c = classloader;
+        // jobject _c = cocos2d::JniHelper::getEnv()->CallObjectMethod(activityinstance,
+        //                                                             _getclassloaderMethod.methodID);
 
-        if (nullptr == _c) {
-            return false;
-        }
+        // if (nullptr == _c) {
+        //     return false;
+        // }
 
         JniMethodInfo _m;
         if (!JniHelper::getMethodInfo_DefaultClassLoader(_m,
@@ -149,7 +144,7 @@ namespace cocos2d {
             return false;
         }
 
-        JniHelper::classloader = cocos2d::JniHelper::getEnv()->NewGlobalRef(_c);
+        JniHelper::classloader = cocos2d::JniHelper::getEnv()->NewGlobalRef(clsLoader);
         JniHelper::loadclassMethod_methodID = _m.methodID;
 
         return true;
