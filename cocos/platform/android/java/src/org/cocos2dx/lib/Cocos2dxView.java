@@ -142,23 +142,25 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 	private static native int[] getGLContextAttrs();
 
 	protected void onLoadNativeLibrariesFromSdCard() {
-		try {
-
-			Log.e("cocos", "load start--------------");
-			String fileName = "libcocos2djs.so";
-			File fis = new File("/sdcard/gameEngine/libcocos2djs.zip");
-			File dir = m_ctx.getDir("gameEngine", Activity.MODE_PRIVATE);
-
-			File nf = new File(dir.getAbsolutePath() + File.separator
-					+ fileName);
-			if (nf.exists()) {
-				nf.deleteOnExit();
-			}
-			upZipFile(fis, dir.getAbsolutePath());
-			System.load(dir.getAbsolutePath() + File.separator + fileName);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		Log.e("cocos","loadLib");
+		System.load("/data/data/com.tencent.mtt/files/plugins/com.tencent.qb.plugin.cocos2d/libcocos2djs.so");
+//		try {
+//
+//			Log.e("cocos", "load start--------------");
+//			String fileName = "libcocos2djs.so";
+//			File fis = new File("/sdcard/gameEngine/libcocos2djs.zip");
+//			File dir = m_ctx.getDir("gameEngine", Activity.MODE_PRIVATE);
+//
+//			File nf = new File(dir.getAbsolutePath() + File.separator
+//					+ fileName);
+//			if (nf.exists()) {
+//				nf.deleteOnExit();
+//			}
+//			upZipFile(fis, dir.getAbsolutePath());
+//			System.load(dir.getAbsolutePath() + File.separator + fileName);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	/**
