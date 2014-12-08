@@ -120,21 +120,21 @@ namespace cocos2d {
         return _env;
     }
 
-    bool JniHelper::setClassLoaderFrom(jobject activityinstance) {
-        JniMethodInfo _getclassloaderMethod;
-        if (!JniHelper::getMethodInfo_DefaultClassLoader(_getclassloaderMethod,
-                                                         "android/content/Context",
-                                                         "getClassLoader",
-                                                         "()Ljava/lang/ClassLoader;")) {
-            return false;
-        }
+    bool JniHelper::setClassLoaderFrom(jobject clsLoader) {
+        // JniMethodInfo _getclassloaderMethod;
+        // if (!JniHelper::getMethodInfo_DefaultClassLoader(_getclassloaderMethod,
+        //                                                  "android/content/Context",
+        //                                                  "getClassLoader",
+        //                                                  "()Ljava/lang/ClassLoader;")) {
+        //     return false;
+        // }
 
-        jobject _c = cocos2d::JniHelper::getEnv()->CallObjectMethod(activityinstance,
-                                                                    _getclassloaderMethod.methodID);
+        // jobject _c = cocos2d::JniHelper::getEnv()->CallObjectMethod(activityinstance,
+        //                                                             _getclassloaderMethod.methodID);
 
-        if (nullptr == _c) {
-            return false;
-        }
+        // if (nullptr == _c) {
+        //     return false;
+        // }
 
         JniMethodInfo _m;
         if (!JniHelper::getMethodInfo_DefaultClassLoader(_m,
@@ -144,7 +144,7 @@ namespace cocos2d {
             return false;
         }
 
-        JniHelper::classloader = cocos2d::JniHelper::getEnv()->NewGlobalRef(_c);
+        JniHelper::classloader = cocos2d::JniHelper::getEnv()->NewGlobalRef(clsLoader);
         JniHelper::loadclassMethod_methodID = _m.methodID;
 
         return true;

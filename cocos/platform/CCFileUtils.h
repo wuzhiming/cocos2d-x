@@ -79,6 +79,13 @@ public:
     virtual void purgeCachedEntries();
     
     /**
+     *  Set the default root path for resources.
+     *  @note The method provides an opportunity to change the default resource root path which 
+     *        is used for getting full path from a relative path.
+     */
+    virtual void setDefaultResourceRootPath(const std::string& resRootPath);
+
+    /**
      *  Gets string from a file.
      */
     virtual std::string getStringFromFile(const std::string& filename);
