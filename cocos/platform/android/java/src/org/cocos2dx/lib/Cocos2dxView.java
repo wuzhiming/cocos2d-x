@@ -46,7 +46,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 
 	public Cocos2dxView(Context context) {
 		super(context);
-		m_ctx = context;
+		m_ctx = context;  
 		m_cocoView = this;
 		CocosViewWrapper.setContext(m_ctx);
 		viewOnCreate();
@@ -99,10 +99,10 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		edittext.setLayoutParams(edittext_layout_params);
 
 		// ...add to FrameLayout
-		mFrameLayout.addView(edittext);
+//		mFrameLayout.addView(edittext);
 
 		// ...add to FrameLayout
-		 mFrameLayout.addView(this);
+//		 mFrameLayout.addView(this);
 
 		if (isAndroidEmulator())
 			this.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
@@ -111,7 +111,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 		this.setCocos2dxEditText(edittext);
 
 		// Set framelayout as the content view
-		 ((Activity) m_ctx).setContentView(mFrameLayout);
+//		 ((Activity) m_ctx).setContentView(mFrameLayout);
 
 	}
 	
@@ -164,7 +164,7 @@ public class Cocos2dxView extends Cocos2dxGLSurfaceView implements
 	}
 
 	/**
-	 * ���������������. ���zipFile���������������folderPath���������.
+	 * ���������������������������������������������. ���������zipFile���������������������������������������������folderPath���������������������������.
 	 * 
 	 * @throws Exception
 	 */
